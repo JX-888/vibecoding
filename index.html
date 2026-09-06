@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>虚拟用户测评平台 · Demo</title>
+<style>
+:root{
+  --primary:#5b5bd6;--primary-dark:#4545c0;--primary-light:#eeeffd;--primary-ghost:#f6f6ff;
+  --ink:#1c2033;--ink-2:#4a4f6a;--ink-3:#8a8fa8;
+  --bg:#f5f6fb;--card:#ffffff;--line:#e7e9f4;
+  --green:#16a34a;--green-bg:#e8f8ef;--orange:#d97706;--orange-bg:#fdf3e3;
+  --red:#dc2626;--red-bg:#fdeaea;--blue:#2563eb;--blue-bg:#e8f0fe;
+  --violet:#7c3aed;--violet-bg:#f1eafd;--cyan:#0891b2;--cyan-bg:#e5f6fa;
+  --radius:16px;--radius-sm:10px;
+  --shadow:0 1px 3px rgba(28,32,51,.06),0 8px 24px rgba(28,32,51,.06);
+  --shadow-lg:0 12px 40px rgba(28,32,51,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+button{font-family:inherit;cursor:pointer;border:none;background:none;font-size:14px}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#d3d6e8;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== 顶栏 ===== */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1280px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a855f7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+.logo small{display:block;font-size:10.5px;font-weight:400;color:var(--ink-3);line-height:1.2}
+.topbar .spacer{flex:1}
+.agent-pill{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;background:var(--primary-ghost);border:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.agent-pill .dot{width:8px;height:8px;border-radius:50%;background:#c3c6da}
+.agent-pill.ok{background:var(--green-bg);border-color:#bfe8cf;color:#166c3a}
+.agent-pill.ok .dot{background:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+
+/* ===== 步骤条 ===== */
+.steps{max-width:1280px;margin:20px auto 0;padding:0 24px;display:flex;align-items:center;gap:0}
+.step{display:flex;align-items:center;gap:10px;padding:10px 18px;border-radius:12px;background:var(--card);border:1px solid var(--line);cursor:pointer;transition:.25s;user-select:none}
+.step .num{width:26px;height:26px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;transition:.25s}
+.step .label{font-weight:600;font-size:13.5px;color:var(--ink-2)}
+.step.active{border-color:var(--primary);box-shadow:0 4px 16px rgba(91,91,214,.18)}
+.step.active .num{background:var(--primary);color:#fff}
+.step.active .label{color:var(--ink)}
+.step.done .num{background:var(--green);color:#fff}
+.step-arrow{flex:0 0 34px;height:2px;background:var(--line);margin:0 8px;border-radius:2px;position:relative}
+.step-arrow:after{content:"";position:absolute;right:0;top:-3px;border-left:6px solid var(--line);border-top:4px solid transparent;border-bottom:4px solid transparent}
+.step-arrow.past{background:#bfe8cf}.step-arrow.past:after{border-left-color:#bfe8cf}
+
+/* ===== 容器 ===== */
+.page{max-width:1280px;margin:18px auto 60px;padding:0 24px;display:none}
+.page.show{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ===== 卡片 ===== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{padding:18px 22px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card-h .material-icons{font-size:0}
+.card-h h2{font-size:16.5px;font-weight:700}
+.card-h .sub{width:100%;font-size:13px;color:var(--ink-3);font-weight:400;margin-top:2px}
+.card-b{padding:16px 22px 22px}
+.sec-tag{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--primary);background:var(--primary-light);padding:3px 10px;border-radius:6px}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 20px;border-radius:12px;font-weight:600;font-size:14px;transition:.2s;border:1px solid transparent}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:0 6px 18px rgba(91,91,214,.35)}
+.btn-ghost{background:var(--card);border-color:var(--line);color:var(--ink-2)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--primary)}
+.btn-lg{padding:13px 30px;font-size:15px;border-radius:14px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none!important}
+.btn .badge-ok{font-size:12px;background:rgba(255,255,255,.25);padding:2px 8px;border-radius:6px}
+
+/* ===== 表单 ===== */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.field label .req{color:var(--red);margin-left:2px}
+.field input,.field select,.field textarea{width:100%;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:#fbfbfe;transition:.2s;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(91,91,214,.12)}
+.field textarea{resize:vertical;min-height:74px}
+.hint{font-size:12px;color:var(--ink-3);margin-top:4px}
+
+/* ===== 上传卡片 ===== */
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px}
+.up-card{border:1.5px dashed #d4d7ea;border-radius:14px;padding:16px;background:#fcfcff;transition:.2s;position:relative}
+.up-card:hover{border-color:var(--primary);background:var(--primary-ghost)}
+.up-card .ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px}
+.up-card h4{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.up-card p{font-size:12px;color:var(--ink-3);margin:5px 0 12px;min-height:34px}
+.up-card .req-badge{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700}
+.req-badge.must{background:var(--red-bg);color:var(--red)}
+.req-badge.opt{background:var(--blue-bg);color:var(--blue)}
+.req-badge.cond{background:var(--orange-bg);color:var(--orange)}
+.up-card.uploaded{border-style:solid;border-color:#bfe8cf;background:#f6fdf9}
+.up-card .file-chip{display:flex;align-items:center;gap:8px;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:var(--ink-2)}
+.up-card .file-chip .chk{color:var(--green);font-weight:700}
+.up-card .up-btn{width:100%;padding:8px;border-radius:9px;border:1.5px solid var(--line);background:#fff;font-weight:600;font-size:13px;color:var(--ink-2);transition:.2s}
+.up-card .up-btn:hover{border-color:var(--primary);color:var(--primary)}
+.up-card.uploaded .up-btn{display:none}
+
+/* ===== 统计面板 ===== */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat-box{background:var(--primary-ghost);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center}
+.stat-box .v{font-size:24px;font-weight:800;color:var(--primary)}
+.stat-box .k{font-size:12px;color:var(--ink-3);margin-top:2px}
+.miss-list{margin-top:12px;font-size:12.5px;color:var(--ink-2);background:var(--orange-bg);border:1px solid #f3ddba;border-radius:10px;padding:10px 14px}
+.miss-list b{color:var(--orange)}
+
+/* ===== 目标 chips ===== */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font-size:13px;color:var(--ink-2);transition:.2s}
+.chip:hover{border-color:var(--primary)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+
+/* ===== 接入成功徽标 ===== */
+.ok-banner{display:none;align-items:center;gap:8px;margin-top:14px;background:var(--green-bg);border:1px solid #bfe8cf;color:#166c3a;border-radius:10px;padding:10px 14px;font-weight:600;font-size:13.5px}
+.ok-banner.show{display:flex}
+.ok-banner.fail{background:var(--red-bg);border-color:#f5c9c9;color:#9c2020}
+
+/* ===== 页面二 ===== */
+.pg2-stats{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:16px}
+.progress-wrap{padding:18px 22px}
+.progress-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.progress-top .big{font-size:15px;font-weight:700}
+.progress-top .pct{font-size:26px;font-weight:800;color:var(--primary)}
+.pbar{height:10px;background:#ecedf8;border-radius:99px;overflow:hidden}
+.pbar>div{height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#a855f7);border-radius:99px;transition:width .5s ease}
+.mini-stats{display:flex;gap:10px;align-items:center;padding:18px 22px}
+.mini-stat{flex:1;text-align:center}
+.mini-stat .v{font-size:21px;font-weight:800}
+.mini-stat .k{font-size:12px;color:var(--ink-3)}
+.v.wait{color:var(--ink-3)}.v.run{color:var(--blue)}.v.done{color:var(--green)}
+.tool-row{display:flex;gap:10px;justify-content:flex-end;margin-bottom:14px;flex-wrap:wrap}
+
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:14px}
+.u-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;cursor:pointer;transition:.22s;position:relative;overflow:hidden}
+.u-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#cfd0ec}
+.u-card.testing{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.u-card.finished{border-color:#bfe8cf}
+.u-head{display:flex;gap:12px;align-items:center}
+.u-avatar{width:52px;height:52px;border-radius:16px;flex-shrink:0;overflow:hidden}
+.u-name{font-weight:700;font-size:14.5px}
+.u-role{font-size:11px;color:var(--ink-3)}
+.u-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+.u-tag{font-size:11px;padding:3px 9px;border-radius:6px;font-weight:600}
+.t1{background:var(--violet-bg);color:var(--violet)}
+.t2{background:var(--cyan-bg);color:var(--cyan)}
+.t3{background:var(--orange-bg);color:var(--orange)}
+.u-status{position:absolute;top:12px;right:12px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px}
+.st-wait{background:#eef0f7;color:var(--ink-3)}
+.st-run{background:var(--blue-bg);color:var(--blue);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.st-done{background:var(--green-bg);color:var(--green)}
+.u-end{margin-top:10px;font-size:11.5px;color:var(--ink-3);display:flex;justify-content:space-between}
+.u-card.pop{animation:pop .4s ease}
+.chat-users .u-row.pop{animation:pop .4s ease}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+
+/* ===== 左侧用户列表 + 右侧对话区（桌面聊天布局） ===== */
+.chat-layout{display:flex;gap:16px;height:min(720px,72vh);margin-top:8px}
+.chat-users{width:300px;min-width:260px;flex-shrink:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden}
+.chat-users .h{padding:14px 16px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink-2)}
+.view-switch{display:flex;gap:4px;background:#f2f3fa;border-radius:8px;padding:3px}
+.view-switch .vbtn{width:28px;height:28px;border:0;background:transparent;border-radius:6px;cursor:pointer;font-size:15px;color:var(--ink-3);line-height:1;display:flex;align-items:center;justify-content:center}
+.view-switch .vbtn.on{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chat-users .list{flex:1;overflow-y:auto;padding:10px}
+.chat-users .grid{display:none;flex:1;overflow-y:auto;padding:10px;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start}
+@media (max-width:1100px){.chat-users .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+.chat-users .grid .u-card{padding:12px}
+.chat-users .grid .u-card.on{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+.chat-users .grid .u-status{position:absolute;top:10px;right:10px;font-size:10px}
+.chat-users .u-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;cursor:pointer;transition:.15s;margin-bottom:6px}
+.chat-users .u-row:hover{background:var(--primary-ghost)}
+.chat-users .u-row.on{background:var(--primary);color:#fff}
+.chat-users .u-row.on .u-role,.chat-users .u-row.on .st{color:rgba(255,255,255,.85)}
+.chat-users .u-row .u-avatar{width:40px;height:40px;flex:none}
+.chat-users .u-row .info{flex:1;min-width:0}
+.chat-users .u-row .name{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-users .u-row .u-role{font-size:11px;color:var(--ink-3)}
+.chat-users .u-row .st{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.chat-users .u-row .st-wait{background:#f2f3fa;color:var(--ink-3)}
+.chat-users .u-row .st-run{background:var(--orange-bg);color:var(--orange)}
+.chat-users .u-row .st-done{background:var(--green-bg);color:var(--green)}
+.chat-pane{flex:1;background:#ededed;border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pane-head{flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f7f7f7;border-bottom:1px solid #e0e0e0}
+.pane-head .hava{width:40px;height:40px;border-radius:5px;overflow:hidden;flex:none}
+.pane-head .title{flex:1;min-width:0}
+.pane-head .title b{font-size:15.5px;color:#111;display:block}
+.pane-head .title span{font-size:11px;color:#888}
+.pane-head .info-btn{font-size:12px;font-weight:700;color:var(--primary);background:var(--primary-ghost);padding:6px 12px;border-radius:8px;cursor:pointer}
+.pane-head .info-btn:hover{background:var(--primary);color:#fff}
+.pane-body{flex:1;overflow-y:auto;padding:18px 20px;background:#ededed}
+.pane-foot{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f7f7f7;border-top:1px solid #e0e0e0}
+.pane-foot .status{font-size:12px;color:#888}
+.pane-profile{position:absolute;top:0;right:0;width:320px;height:100%;background:#fff;border-left:1px solid var(--line);z-index:5;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;overflow:hidden}
+.pane-profile.show{transform:none}
+.pane-profile .pp-h{flex:none;display:flex;align-items:center;gap:9px;padding:12px 16px;background:#f7f7f7;border-bottom:1px solid #e0e0e0;font-size:15px;font-weight:700;color:#111}
+.pane-profile .pp-body{flex:1;overflow-y:auto;padding:16px 16px 24px}
+/* 聊天气泡复用通用样式 */
+.tdiv{text-align:center;font-size:11px;color:#9b9b9b;margin:2px 0 14px}
+.row{display:flex;gap:9px;margin-bottom:15px;align-items:flex-start}
+.row .rhava{width:38px;height:38px;border-radius:5px;overflow:hidden;flex:none}
+.row .rhava svg{display:block}
+.row .bub{max-width:58%;padding:9px 12px;border-radius:6px;font-size:14px;line-height:1.5;word-break:break-word;position:relative;color:#111}
+.row.a .bub{background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.04)}
+.row.u{flex-direction:row-reverse}
+.row.u .bub{background:#95ec69;box-shadow:0 1px 1px rgba(0,0,0,.05)}
+.row.a .bub::before{content:"";position:absolute;left:-5px;top:12px;border:5px solid transparent;border-right-color:#fff;border-left:none}
+.row.u .bub::before{content:"";position:absolute;right:-5px;top:12px;border:5px solid transparent;border-left-color:#95ec69;border-right:none}
+.sysmsg{display:flex;justify-content:center;margin:0 0 15px}
+.sysmsg span{background:#d5d5d5;color:#5e5e5e;font-size:11.5px;padding:4px 12px;border-radius:99px;max-width:88%;text-align:center}
+.typing .bub{display:flex;gap:5px;align-items:center;padding:13px 14px}
+.typing .bub i{width:7px;height:7px;border-radius:50%;background:#b9b9b9;animation:tp 1s infinite}
+.typing .bub i:nth-child(2){animation-delay:.18s}.typing .bub i:nth-child(3){animation-delay:.36s}
+@keyframes tp{30%{transform:translateY(-5px);opacity:.5}}
+.end-tag{display:flex;justify-content:center;margin:4px 0 8px}
+.end-tag span{font-size:12px;font-weight:700;padding:6px 16px;border-radius:99px}
+.et-达成{background:var(--green-bg);color:var(--green)}
+.et-观望{background:var(--blue-bg);color:var(--blue)}
+.et-顾虑{background:var(--orange-bg);color:var(--orange)}
+.et-沉默{background:#eef0f7;color:var(--ink-3)}
+.et-拒绝{background:var(--red-bg);color:var(--red)}
+.et-人工{background:var(--violet-bg);color:var(--violet)}
+.d-sec{margin-bottom:18px}
+.d-sec h4{font-size:12.5px;color:#888;font-weight:700;letter-spacing:.5px;margin-bottom:8px}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11.5px;padding:4px 10px;border-radius:6px;background:var(--primary-ghost);color:var(--primary);border:1px solid #e3e4f8}
+.d-summary{font-size:13px;color:var(--ink-2);background:#fafbff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+@media (max-width:1100px){
+.chat-layout{flex-direction:column;height:auto}
+.chat-users{width:auto;max-height:260px}
+}/* ===== 报告 ===== */
+.rep-head{padding:26px 30px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.rep-head .info{flex:1;min-width:300px}
+.rep-head h1{font-size:21px;font-weight:800}
+.rep-meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--ink-3)}
+.rep-meta b{color:var(--ink-2)}
+.rep-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ver-chip{font-size:11px;font-weight:800;background:var(--violet-bg);color:var(--violet);padding:3px 10px;border-radius:6px}
+.hero{display:grid;grid-template-columns:300px 1fr;gap:0;overflow:hidden}
+.score-side{padding:26px;text-align:center;border-right:1px solid var(--line);background:linear-gradient(160deg,#fbfbff,#f4f4fe)}
+.score-ring{position:relative;width:170px;height:170px;margin:6px auto 10px}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.score-ring .val b{font-size:40px;font-weight:800;color:var(--primary)}
+.score-ring .val span{font-size:12px;color:var(--ink-3)}
+.conclusion{display:inline-block;margin-top:8px;font-size:13.5px;font-weight:800;padding:7px 18px;border-radius:99px}
+.conclusion.pass{background:var(--green-bg);color:var(--green)}
+.conclusion.mid{background:var(--orange-bg);color:var(--orange)}
+.conclusion.bad{background:var(--red-bg);color:var(--red)}
+.goal-side{padding:24px 26px}
+.goal-side .g-line{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:6px}
+.goal-side .g-line b{font-size:14.5px}
+.goal-side .g-desc{font-size:13px;color:var(--ink-2);margin-top:12px;background:#fafbff;border-left:3px solid var(--primary);border-radius:0 10px 10px 0;padding:10px 14px}
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.dim-bar{margin-bottom:13px}
+.dim-bar .t{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.dim-bar .t b{font-weight:700}
+.dim-bar .t span{color:var(--ink-3);font-size:12px}
+.dim-bar .bar{height:8px;background:#ecedf8;border-radius:99px;overflow:hidden}
+.dim-bar .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366f1,#a855f7);transition:width .8s ease}
+.dim-bar.low .bar>i{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.dim-bar .t .sc{font-weight:800;color:var(--primary)}
+.dim-bar.low .t .sc{color:var(--red)}
+/* 状态分布 */
+.dist-row{display:flex;flex-direction:column;gap:10px}
+.dist-item{display:flex;align-items:center;gap:10px;font-size:13px}
+.dist-item .lb{width:76px;font-weight:600;color:var(--ink-2);flex-shrink:0}
+.dist-item .bar{flex:1;height:22px;background:#f0f1f8;border-radius:7px;overflow:hidden;position:relative}
+.dist-item .bar>i{display:block;height:100%;border-radius:7px;transition:width .8s ease;min-width:0;background:linear-gradient(90deg,#6366f1,#a855f7)}
+.dist-item .n{width:66px;text-align:right;font-size:12.5px;color:var(--ink-3);flex-shrink:0}
+.dist-item .n b{font-size:14px;color:var(--ink)}
+.dist-item.clickable{cursor:pointer;border-radius:8px;padding:3px 4px;margin:0 -4px}
+.dist-item.clickable:hover{background:var(--primary-ghost)}
+/* 问题片段 */
+.issue{border:1px solid var(--line);border-radius:13px;padding:15px 17px;margin-bottom:13px;background:#fff}
+.issue .i-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+.issue .i-type{font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;background:var(--red-bg);color:var(--red)}
+.issue .i-type.warn{background:var(--orange-bg);color:var(--orange)}
+.issue .i-user{font-size:13px;font-weight:700}
+.issue .i-user em{font-style:normal;font-weight:400;color:var(--ink-3);font-size:12px}
+.issue .i-ctx{background:#fafbff;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;margin-bottom:9px}
+.issue .i-ctx .m{margin-bottom:7px}
+.issue .i-ctx .m:last-child{margin-bottom:0}
+.issue .i-ctx .m b{font-size:11px;opacity:.6;display:block}
+.issue .i-ctx .m.u-hl{background:var(--red-bg);border-radius:7px;padding:6px 9px;margin:0 -4px}
+.issue .i-fix{font-size:12.5px;color:#166c3a;background:var(--green-bg);border-radius:8px;padding:8px 12px}
+.issue .i-fix b{display:block;font-size:11px;letter-spacing:.5px;margin-bottom:2px}
+/* 建议列表 */
+.sug{display:flex;gap:11px;padding:12px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.sug:last-child{border-bottom:none}
+.sug .no{width:24px;height:24px;flex-shrink:0;border-radius:8px;background:var(--primary-light);color:var(--primary);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+.sug b{display:block;font-size:13.5px}
+.sug span{color:var(--ink-3);font-size:12.5px}
+
+/* ===== 模态框 ===== */
+.modal-mask{position:fixed;inset:0;background:rgba(20,22,40,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(3px)}
+.modal-mask.show{display:flex;animation:fadeUp .25s}
+.modal{background:#fff;border-radius:18px;width:min(1060px,96vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);overflow:hidden}
+.modal-h{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.modal-h h3{font-size:16px;font-weight:800}
+.modal-h .x{margin-left:auto;width:32px;height:32px;border-radius:9px;background:#f2f3fa;font-size:16px;color:var(--ink-2)}
+.modal-h .x:hover{background:var(--red-bg);color:var(--red)}
+.modal-tabs{display:flex;gap:6px;padding:12px 24px 0;border-bottom:1px solid var(--line);overflow-x:auto;flex-wrap:nowrap}
+.modal-tabs .mtab{padding:8px 15px;font-size:13px;font-weight:600;color:var(--ink-3);border-bottom:2.5px solid transparent;white-space:nowrap;border-radius:8px 8px 0 0}
+.modal-tabs .mtab:hover{color:var(--primary);background:var(--primary-ghost)}
+.modal-tabs .mtab.on{color:var(--primary);border-bottom-color:var(--primary)}
+.modal-b{flex:1;overflow:auto;padding:18px 24px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{background:var(--primary-ghost);color:var(--ink-2);font-weight:700;text-align:left;padding:9px 12px;border-bottom:1.5px solid var(--line);position:sticky;top:0;white-space:nowrap}
+.tbl td{padding:9px 12px;border-bottom:1px solid #eef0f8;vertical-align:top;color:var(--ink-2)}
+.tbl tr:hover td{background:#fbfbff}
+.tbl td b{color:var(--ink)}
+.tbl .ex{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--violet)}
+.note{font-size:12.5px;color:var(--ink-3);background:#fafbff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px}
+.note b{color:var(--orange)}
+
+/* ===== 提示 toast ===== */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 22px;border-radius:12px;font-size:13.5px;z-index:400;opacity:0;transition:.3s;pointer-events:none;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 完成横幅 ===== */
+.done-banner{display:none;margin-top:18px;padding:18px 22px;border-radius:14px;background:linear-gradient(120deg,#e9f9ef,#f0fdf4);border:1px solid #bfe8cf;align-items:center;gap:14px}
+.done-banner.show{display:flex}
+.done-banner .txt{flex:1}
+.done-banner .txt b{font-size:15px;color:#166c3a}
+.done-banner .txt span{display:block;font-size:12.5px;color:#3d8f63}
+
+.footer-note{max-width:1280px;margin:0 auto 30px;padding:0 24px;text-align:center;font-size:12px;color:var(--ink-3)}
+@media (max-width:900px){
+  .form-grid,.rep-grid,.pg2-stats{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr}
+  .score-side{border-right:none;border-bottom:1px solid var(--line)}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .steps{flex-wrap:wrap}
+  .step-arrow{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶栏 ============ -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">
+      <div class="logo-mark">👥</div>
+      <div>虚拟用户测评平台<small>公司级 Agent 测评平台 · Demo</small></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="agent-pill" id="agentPill"><span class="dot"></span><span id="agentPillTxt">Agent 未接入</span></div>
+  </div>
+</div>
+
+<!-- ============ 步骤条 ============ -->
+<div class="steps">
+  <div class="step active" id="step1" onclick="gotoStep(1)"><div class="num">1</div><div class="label">上传数据 · 接入 Agent</div></div>
+  <div class="step-arrow" id="ar1"></div>
+  <div class="step" id="step2" onclick="gotoStep(2)"><div class="num">2</div><div class="label">虚拟用户 · 对话测试</div></div>
+  <div class="step-arrow" id="ar2"></div>
+  <div class="step" id="step3" onclick="gotoStep(3)"><div class="num">3</div><div class="label">测评报告</div></div>
+</div>
+
+<!-- ============ 页面一：上传信息 ============ -->
+<div class="page show" id="page1">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="sec-tag">STEP 1 / 3</span><h2>① 数据上传</h2>
+      <span class="sub">上传公司一手用户数据（教育场景 Demo）。基础身份为必填骨架，四类可分析材料至少命中一类即可生成虚拟用户 · <b>每个模块的数据都必须包含 UID（用户唯一ID）字段，系统按 UID 跨模块关联同一用户</b>，无法关联的记录会被跳过 · <a href="#" onclick="openModal('fieldModal');return false" style="color:var(--primary);font-weight:600">查看字段模板与必填/选填说明 →</a></span>
+    </div>
+    <div class="card-b">
+      <div class="upload-grid" id="uploadGrid"></div>
+      <div id="uploadStats" style="display:none;margin-top:18px">
+        <div class="stat-row">
+          <div class="stat-box"><div class="v">22</div><div class="k">总用户数</div></div>
+          <div class="stat-box"><div class="v" id="stValid">0</div><div class="k">UID 匹配有效</div></div>
+          <div class="stat-box"><div class="v">2</div><div class="k">无法关联跳过</div></div>
+          <div class="stat-box"><div class="v" id="stGen">0</div><div class="k">可生成虚拟用户</div></div>
+        </div>
+        <div class="miss-list"><b>UID 匹配说明：</b>五类数据均以 <b>UID</b> 为主键关联。U100234「橙子妈妈」虽有 UID 但无可分析数据（仅昵称，无足迹/聊天/录音/备注）；U100261 在聊天记录中存在，但 <b>UID 无法关联到基础身份表</b>，已跳过。其余用户基础字段完整。</div>
+        <div id="genArea" style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-lg" id="btnGen" onclick="startGen()">⚙ 开始生成虚拟用户</button>
+            <span class="hint" id="genHint">基于匹配到的用户数据，自动生成带画像标签的虚拟用户</span>
+          </div>
+          <div id="genProg" style="display:none">
+            <div class="pbar"><div id="genBar"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-3);margin-top:6px">
+              <span id="genStep">正在解析数据…</span>
+              <span><b id="genCnt" style="color:var(--primary)">0</b> / 20 · <b id="genPct">0%</b></span>
+            </div>
+          </div>
+          <div class="ok-banner" id="genBanner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="sec-tag">STEP 1 / 3</span><h2>② Agent API 接入</h2>
+      <span class="sub">填写待测 Agent 的调用信息，系统完成连通性校验后即可发起测评。协议格式、鉴权与会话策略由平台与开发侧对齐，Demo 阶段使用模拟校验。</span>
+    </div>
+    <div class="card-b">
+      <div class="form-grid">
+        <div class="field"><label>Agent 名称<span class="req">*</span></label><input id="fAName" value="青藤AI课程顾问"></div>
+        <div class="field"><label>Agent 类型</label>
+          <select id="fAType"><option>文本对话型</option><option>语音型（话音转文字接入）</option></select>
+        </div>
+        <div class="field"><label>API 地址<span class="req">*</span></label><input id="fAUrl" value="https://api.qingteng-edu.cn/v3/agent/chat"></div>
+        <div class="field"><label>鉴权方式</label><select id="fAAuth"><option>Bearer Token</option><option>API Key（Header）</option><option>签名（HMAC-SHA256）</option><option>无鉴权</option></select></div>
+        <div class="field"><label>Header / Token</label><input id="fAToken" value="Bearer sk-qt-****-****-8f2a" type="password"></div>
+        <div class="field"><label>Agent 回复字段</label><input id="fAField" value="data.reply.content" hint=""></div>
+        <div class="field full"><label>请求 Body 示例</label><textarea id="fABody" spellcheck="false">{
+  "session_id": "{{session_id}}",
+  "user_profile": "{{virtual_user_json}}",
+  "message": "{{user_message}}",
+  "goal": "引导用户预约试听课"
+}</textarea></div>
+        <div class="field full"><label>Agent 开场白 / 主动触达话术<span class="req">*</span></label><textarea id="fAOpen">您好，我是青藤AI课程顾问小青。看到您近期在 App 上的学习动态，想用一分钟了解下您现在的需求，方便吗？</textarea></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btnConn" onclick="testConn()">🔌 测试连通性</button>
+        <span class="hint">校验项：鉴权 → 字段映射 → 空返回 → 超时（3s）</span>
+      </div>
+      <div class="ok-banner" id="connBanner"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">
+      <span class="sec-tag">STEP 1 / 3</span><h2>③ 本次测评目标<span style="color:var(--red)">*</span></h2>
+      <span class="sub">必填。系统将根据目标调整虚拟用户测试场景、报告判断口径与业务目标达成评分。通用标准判断 Agent 基础质量，测评目标判断业务目的是否达成。</span>
+    </div>
+    <div class="card-b">
+      <div class="chips" id="goalChips"></div>
+      <div class="field"><textarea id="fGoal" placeholder="请填写本次希望 Agent 达成的目标（必填）…"></textarea></div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-top:20px;align-items:center;gap:14px;flex-wrap:wrap">
+    <span class="hint" id="readyHint"></span>
+    <button class="btn btn-primary btn-lg" id="btnToGen" onclick="toGen()" disabled>🚀 开始进行测评 →</button>
+  </div>
+</div>
+
+<!-- ============ 页面二：虚拟用户 ============ -->
+<div class="page" id="page2">
+  <div class="pg2-stats">
+    <div class="card progress-wrap">
+      <div class="progress-top">
+        <div><span class="big" id="progLabel">尚未开始</span><div style="font-size:12px;color:var(--ink-3)" id="progSub">生成虚拟用户后即可开始对话测试</div></div>
+        <div class="pct" id="progPct">0%</div>
+      </div>
+      <div class="pbar"><div id="progBar"></div></div>
+    </div>
+    <div class="card mini-stats">
+      <div class="mini-stat"><div class="v wait" id="cntWait">--</div><div class="k">等待测试</div></div>
+      <div class="mini-stat"><div class="v run" id="cntRun">0</div><div class="k">正在测试</div></div>
+      <div class="mini-stat"><div class="v done" id="cntDone">0</div><div class="k">已完成</div></div>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <button class="btn btn-ghost" onclick="openModal('labelModal')">🏷️ 查看画像标签体系</button>
+    <button class="btn btn-ghost" id="btnSpeed" onclick="toggleSpeed()">⏩ 加速演示：关</button>
+    <button class="btn btn-primary btn-lg" id="btnStart" onclick="startTest()" disabled>▶ 开始测试</button>
+  </div>
+
+  <div class="done-banner" id="doneBanner">
+    <div style="font-size:30px">🎉</div>
+    <div class="txt"><b>全部 20 个虚拟用户测试完成</b><span>系统已根据对话记录生成测评报告，包含综合得分、结束状态分布、关键问题片段与优化建议。</span></div>
+    <button class="btn btn-primary btn-lg" onclick="gotoStep(3)">📊 查看测评报告</button>
+  </div>
+
+  <div class="chat-layout" id="chatLayout">
+    <div class="chat-users" id="chatUsersPanel">
+      <div class="h" style="display:flex;align-items:center;justify-content:space-between">
+        <span id="chatUsersTitle">虚拟用户列表</span>
+        <span class="view-switch">
+          <button class="vbtn on" id="vList" onclick="setUserView('list')" title="列表视图">☰</button>
+          <button class="vbtn" id="vGrid" onclick="setUserView('grid')" title="总览视图">▦</button>
+        </span>
+      </div>
+      <div class="list" id="chatUsers"></div>
+      <div class="grid" id="chatUsersGrid"></div>
+    </div>
+    <div class="chat-pane" id="chatPane">
+      <div class="pane-head" id="paneHead"></div>
+      <div class="pane-body" id="paneBody"></div>
+      <div class="pane-foot" id="paneFoot"></div>
+      <div class="pane-profile" id="paneProfile"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 页面三：报告 ============ -->
+<div class="page" id="page3">
+  <div class="card rep-head">
+    <div class="info">
+      <h1>Agent 测评报告 <span class="ver-chip" id="repVer">V1</span></h1>
+      <div class="rep-meta">
+        <span>Agent：<b id="rAgent">青藤AI课程顾问</b></span>
+        <span>版本：<b id="rAgentVer">v1.3.0</b></span>
+        <span>测试时间：<b id="rTime">2026-09-06 09:40</b></span>
+        <span>虚拟用户：<b id="rUsers">20 个</b></span>
+      </div>
+      <div class="rep-meta" style="margin-top:6px"><span>测评目标：<b id="rGoal">引导用户预约试听课</b></span><span>模式：<b>Agent 先开口 · 主动触达</b></span></div>
+    </div>
+    <div class="rep-actions">
+      <button class="btn btn-ghost" onclick="copyLink()">🔗 复制分享链接</button>
+      <button class="btn btn-ghost" onclick="toast('Demo 阶段报告以网页形式呈现，PDF 导出为后续扩展能力')">⬇️ 下载报告</button>
+      <button class="btn btn-ghost" onclick="openModal('metricModal')">📋 查看完整指标体系</button>
+      <button class="btn btn-primary" onclick="retest()">🔁 同批用户重新测评</button>
+    </div>
+  </div>
+
+  <div class="card hero" style="margin-top:16px">
+    <div class="score-side">
+      <div class="score-ring">
+        <svg width="170" height="170">
+          <circle cx="85" cy="85" r="74" fill="none" stroke="#ecedf8" stroke-width="13"/>
+          <circle id="ringFg" cx="85" cy="85" r="74" fill="none" stroke="url(#gradRing)" stroke-width="13" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465" style="transition:stroke-dashoffset 1.2s ease"/>
+          <defs><linearGradient id="gradRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+        </svg>
+        <div class="val"><b id="scoreVal">0</b><span>综合得分 / 100</span></div>
+      </div>
+      <div class="conclusion mid" id="conclusion">—</div>
+    </div>
+    <div class="goal-side">
+      <div class="g-line">🎯 本次测评目标：<b id="gGoal">引导用户预约试听课</b></div>
+      <div class="g-line" id="gResult"></div>
+      <div class="dist-row" id="distRow" style="margin-top:18px"></div>
+      <div class="g-desc" id="gDesc"></div>
+    </div>
+  </div>
+
+  <div class="rep-grid">
+    <div class="card">
+      <div class="card-h"><span class="sec-tag">分项得分</span><h2>七维评分（总分 100）</h2>
+        <span class="sub">MVP 采用产品预设权重；任一核心维度低分或命中一票否决项，将生成关键问题片段解释扣分原因。</span></div>
+      <div class="card-b" id="dimBars"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="sec-tag">用户回溯</span><h2>虚拟用户总览</h2>
+        <span class="sub">全部 20 个虚拟用户的结束状态、核心标签与画像摘要，点击用户卡片可回看完整对话上下文。</span></div>
+      <div class="card-b" id="usersMini" style="max-height:520px;overflow-y:auto">
+        <div class="hint" style="margin-bottom:10px">点击顶部「结束状态分布」可筛选用户；点击卡片可围观该用户与 Agent 的完整对话。</div>
+        <div class="users-grid" id="overviewGrid" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><span class="sec-tag">扣分证据</span><h2>关键问题片段</h2>
+      <span class="sub">展示发生在哪个虚拟用户、Agent 说了什么、用户怎么反应、问题类型与修改建议。</span></div>
+    <div class="card-b" id="issues"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><span class="sec-tag">行动项</span><h2>优化建议</h2>
+      <span class="sub">修复后可在本页点击「同批用户重新测评」，复用同一批虚拟用户、同一目标与同一评判标准生成新报告。</span></div>
+    <div class="card-b" id="sugs"></div>
+  </div>
+</div>
+
+<div class="footer-note">虚拟用户测评平台 Demo · 数据来源：虚拟用户测评平台 Demo PRD（教育行业首版背景）· 本页所有数据为演示模拟数据</div>
+
+<!-- ============ 字段模板模态框 ============ -->
+<div class="modal-mask" id="fieldModal" onclick="if(event.target===this)closeModal('fieldModal')">
+  <div class="modal">
+    <div class="modal-h"><h3>📄 上传字段模板（必填 / 选填 确认版）</h3><button class="x" onclick="closeModal('fieldModal')">✕</button></div>
+    <div class="note" style="margin:14px 24px 0">字段设计原则：<b>少量必填</b>保证能生成基础虚拟用户，<b>更多选填</b>用于提升画像丰富度。App 足迹 / 聊天记录 / 录音转写 / 人工备注四类<b>至少命中一类</b>即可生成。超出基础字段库的自定义字段由 AI 重新定义分析。</div>
+    <div class="modal-tabs" id="fieldTabs"></div>
+    <div class="modal-b" id="fieldBody"></div>
+  </div>
+</div>
+
+<!-- ============ 标签体系模态框 ============ -->
+<div class="modal-mask" id="labelModal" onclick="if(event.target===this)closeModal('labelModal')">
+  <div class="modal">
+    <div class="modal-h"><h3>🏷️ 画像标签体系（8 维度）</h3><button class="x" onclick="closeModal('labelModal')">✕</button></div>
+    <div class="note" style="margin:14px 24px 0">系统根据基础身份、App 足迹、聊天记录、录音转写与人工备注自动打标签。卡片仅展示 3 个核心标签（商业标签 / 沟通风格 / 当前阶段），完整标签进入详情页与后台。</div>
+    <div class="modal-tabs" id="labelTabs"></div>
+    <div class="modal-b" id="labelBody"></div>
+  </div>
+</div>
+
+<!-- ============ 指标体系模态框 ============ -->
+<div class="modal-mask" id="metricModal" onclick="if(event.target===this)closeModal('metricModal')">
+  <div class="modal">
+    <div class="modal-h"><h3>📋 对话型 Agent 全维度质量评判指标汇总</h3><button class="x" onclick="closeModal('metricModal')">✕</button></div>
+    <div class="note" style="margin:14px 24px 0">评分模板为 MVP 预设（总分 100）：目标达成度 20% · 开场/触达质量 15% · 用户理解与画像匹配 15% · 回答相关性与准确性 15% · 多轮推进与上下文承接 15% · 体验与语气 10% · 风险合规 10%；另设<b>一票否决硬指标</b>。</div>
+    <div class="modal-tabs" id="metricTabs"></div>
+    <div class="modal-b" id="metricBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   数据区：字段模板 / 标签体系 / 指标体系（来自飞书 PRD 真实表格）
+================================================================ */
+const FIELD_SHEETS=[
+{name:"基础身份信息",desc:"识别用户基本背景（必填骨架）",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["user_id","string","用户唯一ID","10023456","必填"],
+["nickname","string","用户昵称","小明同学","必填"],
+["phone","string","手机号","138****1234","选填"],
+["province","string","所在省份","广东省","选填"],
+["city","string","所在城市","深圳市","选填"],
+["district","string","所在区/县","南山区","选填"],
+["grade","string","当前年级","初三","必填"],
+["textbook_version","string","教材版本","人教版","选填"],
+["user_role","string","用户角色（student/parent/teacher）","parent","必填"],
+["register_time","datetime","注册时间","2026/1/15 9:30","选填"],
+["last_login_time","datetime","最后登录时间","2026/9/4 22:15","选填"],
+["user_status","string","账户状态（active/frozen/cancelled）","active","选填"]]},
+{name:"App足迹 · 学习行为画像",desc:"使用者视角",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["preferred_subjects","array","偏好学科列表（按学习时长TOP3）",'["数学","物理","英语"]',"选填"],
+["preferred_difficulty","string","偏好难度层级（basic/intermediate/advanced）","intermediate","选填"],
+["current_stage","string","当前学习阶段（预习/同步/复习冲刺）","同步","必填"],
+["current_chapter","string","当前学到章节","二次函数","选填"],
+["chapter_progress","float","当前章节完成度（0-100）","65.5","选填"],
+["video_completion_rate","float","录播课完课率","72.3","选填"],
+["avg_daily_learning_minutes","int","近30天日均学习分钟数","42","选填"],
+["weekly_learning_days","int","近30天周均活跃天数","4","选填"],
+["days_since_last_learn","int","距离上次学习天数","2","选填"],
+["total_learning_minutes","int","累计学习总分钟数","3840","选填"],
+["videos_completed","int","已完整学完的视频数","127","选填"],
+["exercise_accuracy","float","综合习题正确率（0-100）","68.5","选填"],
+["weak_knowledge_points","array","薄弱知识点列表（正确率<60%）",'["二次函数图像变换","欧姆定律"]',"选填"],
+["mastery_radar","object","各知识点掌握度数据",'{"代数":75,"几何":52,"函数":43}',"选填"]]},
+{name:"App足迹 · 课程浏览与意向",desc:"购买决策画像 · 最高优先级",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["browsed_course_ids","array","近30天浏览过的课程ID列表（含时间戳）",'[{"id":"C001","time":"..."}]',"选填"],
+["browsed_course_price_range","string","浏览课程的主流价格带","500-1000","选填"],
+["detail_page_avg_duration","int","课程详情页平均停留时长（秒）","85","选填"],
+["detail_page_max_duration","int","单次最长停留时长（秒）","320","选填"],
+["trial_video_completion_rate","float","试听课/试看视频完成度（0-100）","100","选填"],
+["trial_video_exit_point","float","试听课退出位置（百分比）","35.5","选填"],
+["price_comparison_clicks","int","对比不同价格套餐的点击次数","5","选填"],
+["coupon_click_count","int","点击查看优惠/促销的次数","3","选填"],
+["coupon_used_count","int","已使用优惠券数量","2","选填"],
+["favorite_course_ids","array","收藏但未购买的课程ID列表",'["C003","C007"]',"选填"],
+["cart_course_ids","array","加入购物车但未支付的课程ID列表",'["C009"]',"选填"]]},
+{name:"App足迹 · 支付与转化",desc:"购买决策画像 · 最高优先级",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["checkout_reached","int","到达支付页的次数","3","选填"],
+["checkout_abandon_count","int","支付页放弃次数（进入但未支付）","2","选填"],
+["checkout_abandon_step","string","放弃支付时的最后步骤","确认支付按钮_未点击","选填"],
+["last_abandon_time","datetime","最近一次放弃支付时间","2026/9/3 20:30","选填"],
+["total_paid_amount","float","历史累计付费总金额（元）","2680","选填"],
+["total_order_count","int","历史总订单数","5","选填"],
+["avg_order_amount","float","平均客单价","536","选填"],
+["max_single_payment","float","单笔最高付费金额","1299","选填"],
+["first_purchase_time","datetime","首次付费时间","2025/9/1 10:00","选填"],
+["last_purchase_time","datetime","最近一次付费时间","2026/8/15 14:20","选填"],
+["purchase_subject_distribution","object","已购学科分布及金额",'{"数学":2,"物理":1,"英语":1}',"选填"],
+["repurchase_interval_days","int","平均复购间隔天数","45","选填"],
+["preferred_price_range","string","偏好成交价位段","300-600","选填"],
+["preferred_paid_subject","string","最愿意花钱的学科","数学","选填"],
+["is_first_order_discount","boolean","首单是否使用优惠","TRUE","选填"],
+["discount_dependency","string","优惠依赖度（always/sometimes/never）","sometimes","选填"]]},
+{name:"App足迹 · 退款与异常",desc:"风险预警",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["refund_count","int","退款次数","0","选填"],
+["refund_amount","float","累计退款金额","0","选填"],
+["refund_reasons","array","退款原因列表","[]","选填"],
+["payment_fail_count","int","支付失败次数","1","选填"]]},
+{name:"App足迹 · 设备与环境",desc:"场景与时机",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["device_model","string","设备型号","iPhone 14 Pro","选填"],
+["platform","string","平台（iOS/Android/Web）","iOS","选填"],
+["app_version","string","APP版本号","v3.5.2","选填"],
+["os_version","string","操作系统版本","iOS 17.2","选填"],
+["network_type","string","常用网络类型（wifi/4g/5g）","wifi","选填"],
+["screen_resolution","string","屏幕分辨率","2556x1179","选填"]]},
+{name:"App足迹 · 激励与活跃",desc:"留存相关",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["points_balance","int","积分/金币余额","1280","选填"],
+["total_points_earned","int","累计获得积分","8560","选填"],
+["daily_checkin_days","int","连续签到天数","15","选填"],
+["max_checkin_days","int","历史最长连续签到","67","选填"],
+["badge_count","int","获得的勋章/成就数量","12","选填"],
+["share_count","int","累计分享次数","8","选填"],
+["comment_count","int","累计评论/提问次数","23","选填"],
+["help_others_count","int","帮助他人（答疑/回复）次数","5","选填"],
+["rank_average","int","排行榜平均名次","156","选填"]]},
+{name:"App足迹 · 推送与触达偏好",desc:"主动触达敏感度",head:["字段名","类型","说明","示例值","必填/选填"],rows:[
+["preferred_push_time","string","偏好推送时段（morning/afternoon/night）","night","选填"],
+["push_click_rate","float","推送点击率","12.5","选填"],
+["last_push_click_time","datetime","最近一次点击推送的时间","2026/9/2 21:00","选填"],
+["notification_enabled","boolean","是否开启通知","TRUE","选填"]]},
+{name:"历史聊天记录（JSONL）",desc:"用户真实表达方式/顾虑/沟通习惯",head:["字段名","说明","规则"],rows:[
+["sender_id","对方微信ID","条件必填；无用户ID时必须提供"],
+["sender_name","对方昵称","选填，可用于辅助识别"],
+["receiver_id","我方微信ID","选填"],
+["is_send","0=对方发，1=我方发","条件必填"],
+["msg_type","消息类型（text/image/voice/video）","选填；MVP 优先处理 text"],
+["content","消息内容（文本填文字，图片可填描述）","条件必填"],
+["create_time","消息时间戳（Unix 秒级）","条件必填"]]},
+{name:"录音转写文本",desc:"电话/语音沟通真实反馈",head:["字段名","说明","规则"],rows:[
+["用户ID","关联用户","条件必填"],
+["转写文本","分析用户真实反馈、情绪和顾虑","条件必填"],
+["通话时间","判断用户阶段","条件必填"],
+["销售/坐席ID","区分沟通来源","选填"],
+["通话时长","辅助判断沟通深度","选填"],
+["说话人角色","用户 / 销售 / 客服","选填"],
+["原始音频文件名","命名：{用户ID}_{销售ID}_{通话日期}_{序号}.{格式}","选填"]]},
+{name:"人工补充备注",desc:"业务人员额外判断（选填）",head:["字段名","说明","规则"],rows:[
+["用户ID","关联用户","条件必填"],
+["备注内容","如：用户比较着急 / 家长关注效果 / 受竞品影响 / 不喜欢长篇介绍","条件必填"],
+["备注时间","判断信息新旧","选填"],
+["备注人","追溯信息来源","选填"],
+["备注类型","需求 / 顾虑 / 风险 / 跟进建议","选填"]]}
+];
+
+const LABEL_SHEETS=[
+{name:"消费决策类",sub:"怎么买、花多少 —— 最核心的商业维度",head:["标签类型","具体标签示例","数据来源"],rows:[
+["价格敏感度","价格敏感型 / 价格钝感型 / 比价型","浏览价位、是否用券、放弃支付时的价格"],
+["决策周期","快速决策型（<1天） / 长考型（>7天）","首次浏览 → 首次购买的时间差"],
+["客单价层级","高客单（>1000元） / 中客单（300-1000） / 低客单（<300）","历史成交均价、浏览课程价格带"],
+["优惠依赖度","券驱动型 / 非券驱动型","有券才下单的比例"],
+["复购倾向","高复购潜力 / 一次性用户 / 沉默待激活","购买间隔、上次购买时间、课程完课率"],
+["学科付费偏好","数学刚需 / 全科均衡 / 英语偏科","各学科购买金额占比、浏览时长占比"]]},
+{name:"学习行为类",sub:"怎么学、学得怎么样 —— 教育APP专属",head:["标签类型","具体标签示例","数据来源"],rows:[
+["学习投入度","重度学习者（日均>60min）/ 中度 / 轻度（<15min）","日均学习时长、周活跃天数"],
+["学习能力层","学霸型（正确率>85%）/ 中等 / 需帮扶型（<50%）","习题正确率、薄弱知识点数量"],
+["学习节奏","匀速型 / 突击型（周末狂学）/ 拖延型","学习时间分布、完课率、章节进度"],
+["知识薄弱点","二次函数薄弱 / 时态混乱 / 实验题失分多","错题集、反复回看视频的段落"],
+["学习目标","升学备考 / 同步培优 / 预习新课 / 竞赛冲刺","浏览内容类型、搜索关键词、年级变化"]]},
+{name:"沟通与情绪类",sub:"聊得怎么样 —— 来自聊天/录音分析 ⭐",head:["标签类型","具体标签示例","AI分析依据"],rows:[
+["沟通主动性","主动型 / 被动应答型","用户发起对话占比、平均响应速度、提问数量"],
+["情绪倾向","积极乐观 / 焦虑急躁 / 理性冷静 / 犹豫纠结","NLP情感分析（关键词+语气）"],
+["性格特征","结果导向型 / 细节关注型 / 从众型 / 独立判断型","提问内容（“能提多少分”vs“讲什么内容”vs“别人买了怎么样”）"],
+["异议类型","价格异议 / 效果异议 / 时间异议 / 信任异议","聊天中反复出现的顾虑关键词"],
+["决策角色","家长决策 / 学生自驱 / 共同决策","对话人称（“我孩子”vs“我想学”）、代付款行为"],
+["耐心指数","高耐心 / 低耐心","看详情页停留时长、听语音条是否听完、是否催促回复"]]},
+{name:"社交影响力类",sub:"能带多少人",head:["标签类型","具体标签示例","数据来源"],rows:[
+["分享意愿","高传播者 / 沉默用户","分享课程、邀请好友、评价次数"],
+["社群活跃度","意见领袖型 / 活跃参与型 / 潜水型","答疑区回答他人次数、打卡参与数、被回复数"],
+["从众影响力","易被朋友影响 / 独立决策","是否因“好友在学”而购买、拼团参与度"]]},
+{name:"生命周期阶段类",sub:"处于哪个阶段",head:["标签类型","具体标签示例","数据来源"],rows:[
+["用户阶段","新客（注册<7天）/ 活跃用户 / 沉默用户（>30天未登录）/ 流失用户（>90天）","注册时间、最后登录时间、活跃天数"],
+["学习进度","启蒙期 / 上升期 / 瓶颈期 / 冲刺期","章节进度变化率、正确率趋势、完课率"],
+["购买阶段","纯浏览未购 / 首购用户 / 复购用户 / 高价值VIP","购买次数、总金额、上次购买时间"]]},
+{name:"场景与时机类",sub:"什么时候、什么环境用",head:["标签类型","具体标签示例","数据来源"],rows:[
+["学习时段偏好","早鸟型（6-9点）/ 午休型 / 夜猫型（22点后）/ 周末型","学习/购买行为的时间分布"],
+["设备偏好","Pad重度用户 / 手机党 / 电脑端","设备型号、平台分布"],
+["地理位置","一线城市 / 二三线 / 县城","IP定位或用户填写的城市"]]},
+{name:"兴趣内容类",sub:"对什么话题感兴趣",head:["标签类型","具体标签示例","数据来源"],rows:[
+["内容形式偏好","爱看视频 / 爱刷题 / 爱看图文干货 / 爱听音频","各内容类型的点击/时长分布"],
+["搜索意图","高频搜索词直接成标签，如“怎么提高作文”/“函数不会”","搜索词、客服对话关键词"]]},
+{name:"风险与预警类",sub:"哪里可能会出问题",head:["标签类型","具体标签示例","数据来源"],rows:[
+["流失风险","高风险流失（>7天未学）/ 中风险 / 低风险","最后学习间隔、登录频次趋势"],
+["退款风险","高退款倾向（完课率<20% + 正确率低 + 聊天抱怨）","完课率、正确率、聊天情绪"],
+["支付障碍","支付频繁失败 / 支付页反复退出","支付失败次数、放弃支付步骤"]]}
+];
+
+const METRIC_SHEETS=[
+{name:"① 文本型基础质量",head:["分类","序号","指标名称","判断标准","好表现示例","差表现示例","量化方式","达标线"],rows:[
+["流畅度","1","文本流畅度","句子是否通顺、有无语法错误、有无重复啰嗦","“我建议你先从二次函数的基础概念开始学起。”","“建，建议你你你从…从二次，那个函数的基础基础开始学…”","LLM打分(0-10) / 困惑度","≥ 7/10"],
+["相关性","2","接话相关性","是否接住了用户上一句话，是否答非所问","用户问“这个课多少钱？” → “初三数学系统班目前是799元”","用户问“这个课多少钱？” → “我们有很多课程，您可以看看。”","语义相似度 / LLM打分","≥ 6/10"],
+["一致性","3","上下文一致性","是否记得之前说过的话，不前后矛盾","用户说“我孩子叫小明”，下一轮AI说“小明现在上几年级？”","用户说“我孩子叫小明”，下一轮AI说“您孩子叫什么名字？”","实体抽取+一致性校验","错误次数 = 0"],
+["信息密度","4","信息密度","是否有实质内容，还是空话套话","“小明的‘一元一次方程’正确率仅45%，建议看第3章基础课。”","“好的，建议您多练习哦。”","信息性词汇占比 / LLM打分","≥ 5/10"],
+["回复长度","5","回复长度合理性","是否过长或过短，符合场景预期","用户问“你好” → “您好！我是AI助手，有什么可以帮您？”","用户问“你好” → 回复300字自我介绍","字符数/词数统计","问候语20-50字；解答150-300字"],
+["延迟","6","响应延迟","从用户说完到AI开始回复的时间","≤ 1秒","> 3秒","直接计时（毫秒）","≤ 3000ms"],
+["完整性","7","回复完整性","是否完整无截断、无乱码","回复内容完整，标点符号正常","回复中途截断 / 出现特殊字符","正则检测 / 字符串校验","100%完整"]]},
+{name:"② 语音型特有质量指标",head:["分类","序号","指标名称","判断标准","好表现示例","差表现示例","量化方式","达标线"],rows:[
+["清晰度","8","发音清晰度","每个字清晰可辨，无吞音","“二~次~函~数~”字字清晰","含混不清，吞音严重","ASR转写置信度","≥ 85%"],
+["语速","9","语速适中度","语速是否在正常范围内","180-220字/分钟","80字/分钟（太慢）或300字/分钟（太快）","统计每分钟字数","150-260字/分钟"],
+["停顿","10","停顿自然度","标点处有自然停顿，无突兀卡顿","句号后停顿0.5秒，逗号后停顿0.2秒","句中无端停顿>2秒，或全程无停顿","统计静音段时长和位置","句间停顿0.3-1.2秒；句中<0.3秒"],
+["韵律","11","韵律与语调","有无语调起伏、重音是否得当","重点词汇有重音，疑问句尾音上扬","全程平调，像机器人念稿","TTS MOS分 / 人工听测","MOS ≥ 4.0/5.0"],
+["接话","12","接话节奏","用户说完后多久开始回复","用户说完0.5-1.5秒内接话","沉默>3秒才开口，或用户还没说完就抢话","用户结束到AI开口的时间差","0.5-2.0秒"],
+["打断","13","打断处理能力","被用户打断时是否能正确处理","被打断时立即停止播放，倾听用户","被打断后继续自顾自念完","检测用户语音期间TTS是否停止","100%响应打断"],
+["情绪","14","情绪匹配度","语气是否匹配用户的情绪","用户焦虑→AI语气柔和安慰；用户高兴→AI语气轻快","无论用户什么情绪，AI始终平调无变化","情感识别模型打分","≥ 6/10"],
+["话轮","15","话轮切换平滑度","用户说完后AI是否能平滑接管对话","用户语速放慢/结束时，AI无缝跟进","与用户同时说话（overlap）频繁发生","检测重叠语音时长占比","重叠占比 < 5%"],
+["澄清","16","确认与澄清自然度","没听清时是否能自然请求重复","“不好意思，您刚才说的是XX吗？”","“请再说一遍。”（生硬、机械）","LLM打分","≥ 7/10"]]},
+{name:"③ 通信与行为稳定性",head:["分类","序号","指标名称","判断标准","好表现示例","差表现示例","量化方式","达标线"],rows:[
+["漏发","17","消息漏发率","用户发送消息后，Agent是否每次都回复了","用户每发一条，Agent都有对应回复","用户发了3条，Agent只回了第1条和第3条","用户消息数 - Agent回复数","漏发率 = 0%"],
+["多发","18","消息多发率","Agent是否对同一条用户消息回复了多次","用户问1次，Agent回1次","用户问1次，Agent连续回了3条一模一样的内容","同一轮次内Agent回复条数，内容相似度>90%","每条用户消息对应Agent回复 ≤ 1条"],
+["重复","19","相似内容重复推送率","Agent是否在短时间内发送了多句意思相近的话","“建议从基础学”→“具体看第3章”→“再练习巩固”（层层递进）","“建议从基础学”→“你要从基础学”→“建议先学基础”","相邻回复语义相似度>85%且间隔<3轮","重复率 < 5%"],
+["空回复","20","空回复率","Agent回复的内容是否为空或仅有标点符号","回复有实质内容","回复内容为“……”或“好的。”（无实质信息）","检测去除标点空格后的有效字符数","有效字符 ≥ 5个"],
+["覆盖率","21","用户消息响应覆盖率","用户每一条消息是否都获得了对应处理","用户每条消息都得到了处理（回复/转人工/确认接收）","用户说了三句，Agent只处理了最后一句","检查每个用户消息是否有对应的响应ID","覆盖率 = 100%"],
+["心跳","22","会话心跳稳定性","长对话中Agent是否保持“在线”状态","整个对话过程中Agent持续响应，无超时中断","对话进行到第5轮后Agent突然无响应","检测是否有timeout或connection lost事件","心跳超时率 < 1%"],
+["并发","23","并发冲突检测","用户快速连续发送多条消息，Agent是否逐条正确处理","用户连发三条，Agent逐条依次回复","Agent只回复了最后一条，或用同一句话回复三条","按message_id顺序检查对应回复","0次错位/漏回"]]},
+{name:"④ 用户视角体验指标",head:["分类","序号","指标名称","判断标准","好表现示例","差表现示例","量化方式","达标线"],rows:[
+["被理解感","24","用户重复提问率","用户是否需要反复解释同一个问题","用户说一次，AI就准确抓住意图","用户需要反复重述同一问题","同一问题重述次数","≤ 1次"],
+["被尊重感","25","情绪响应率","AI是否能回应和匹配用户的情绪状态","AI能叫出用户名字，能回应情绪","AI用机械语言、不接用户情绪","情绪词响应率 / 人称代词使用率","≥ 80%"],
+["被重视感","26","实体引用率","AI是否在回复中引用了用户提供的信息","“小明的‘一元一次方程’正确率仅45%”","全程用“您孩子”“该用户”等泛指称呼","回复中引用用户提供信息的实体数量","≥ 1个/轮"],
+["被引导感","27","用户主动结束对话占比","用户是否在问题解决后自然结束对话","用户说出“好的谢谢”“明白了”等结束语","用户突然消失不说话了","用户主动结束对话的次数 / 总对话数","≥ 30%"],
+["掌控感","28","用户主动提问占比","用户是否感觉自己掌控着对话节奏","AI在关键节点给用户选择权","AI连续追问、不给用户思考和选择空间","用户主动提问数 / 总对话轮数","≥ 40%"],
+["安全感","29","信息准确率","AI给出的信息是否准确、可靠","AI信息准确，不确定时说“我确认一下”","AI给出错误信息或编造答案","信息准确率 / AI承认不知道的比例","准确率 ≥ 95%；承认率 ≥ 5%"],
+["愉悦感","30","用户情感极性","用户对话结束后是否有正面情绪反馈","用户说“太棒了”“谢谢你”“很有帮助”","用户说“算了算了”“就这样吧”","用户回复中的情感正负值分析","正面情绪 ≥ 60%"],
+["耐心感","31","追问后相关性变化趋势","用户追问后AI的回复质量是否下降","用户追问后AI能给出更精准的解答","用户追问后AI回复变得更笼统","追问前后相关性评分的变化趋势","趋势不下降"]]},
+{name:"⑤ 业务目标达成指标",head:["分类","序号","指标名称","判断标准","好表现示例","差表现示例","量化方式","达标线"],rows:[
+["效率","33","目标完成路径长度","从对话开始到用户完成目标，一共经过了几轮对话","3轮内完成跳转","超过7轮还没完成跳转","统计对话轮次数","≤ 5轮"],
+["障碍识别","34","跳转前障碍识别率","用户拒绝跳转时，Agent能否识别出原因","用户说“太贵了”，Agent识别为“价格异议”","用户说“太贵了”，Agent回复“您可以再看看”","用户拒绝后Agent是否识别出原因类型","≥ 80%"],
+["挽回","35","拒绝挽回成功率","用户第一次拒绝后，Agent能否成功挽回","用户第一次拒绝 → Agent二次引导 → 用户点击跳转","用户第一次拒绝 → Agent放弃引导","挽回成功人数 / 拒绝人数 × 100%","≥ 20%（教育行业参考）"],
+["自然度","36","目标引导的自然度","Agent引导用户完成目标时是否生硬突兀","在回答中自然融入“要不我们先看看课程详情？”","突然跳出对话逻辑直接扔一个链接","LLM打分（从对话上下文判断引导是否自然）","≥ 6/10"],
+["自主转化","37","无引导自主跳转率","用户在Agent未发送链接时，主动完成目标的比例","用户主动说“这个课在哪看？发我一下”","用户全程被动等待Agent推送","用户自行完成目标人数 / 总转化人数","越高越好，说明需求真实强烈"],
+["回访","38","跳转后回访率","用户完成跳转后是否返回继续对话","用户跳转看完课程后回来问“这个课什么时候开始？”","用户跳转后直接离开，再无互动","跳转后返回继续对话的人数 / 总跳转人数","≥ 30%"]]},
+{name:"⑥ 一票否决硬指标",head:["序号","检查项","达标要求","检测方式"],rows:[
+["1","回复是否完整（无截断/乱码）","100%完整，无特殊字符","正则检测 / 字符串校验"],
+["2","是否答非所问","相关性评分 ≥ 6/10","LLM-as-Judge"],
+["3","是否通顺（文本）/ 清晰（语音）","流畅度 ≥ 7/10 / ASR置信度 ≥ 85%","LLM打分 / ASR置信度"],
+["4","响应延迟","文本 ≤ 3秒 / 语音 ≤ 2秒","系统计时"],
+["5","是否有不当/违规内容","0次","敏感词库 / 内容审核API"],
+["6","是否漏发（用户消息无回复）","漏发率 = 0%","message_id对账"],
+["7","是否多发（同一条消息重复回复）","每条用户消息对应 ≤ 1条Agent回复","消息映射关系校验"],
+["8","是否完成核心业务目标","目标转化率 ≥ 10%（最低容忍线）","目标完成人数 / 接收引导人数"]]},
+{name:"⑦ 综合判断规则",head:["综合分范围","判定结果","处理建议"],rows:[
+["≥ 7.0分","好对话","纳入正向样本，用于模型优化"],
+["5.0 - 7.0分","一般对话","标记需优化，定期review"],
+["< 5.0分","差对话","立即触发人工介入，标记为bad case"]]}
+];
+
+/* ================================================================
+   20 个虚拟用户（教育场景 · 模拟数据）
+================================================================ */
+const OPENING="您好，我是青藤AI课程顾问小青。看到您近期在 App 上的学习动态，想用一分钟了解下您现在的需求，方便吗？";
+const USERS=[
+{id:"U1001",name:"悠悠妈妈",role:"家长 · 初三",tags:["高意向","比价型","已试听"],all:["高复购潜力","效果异议","夜猫型","快速决策","关注二次函数"],summary:"孩子已试听过数学思维课，二次函数是主要丢分点，家长对价格敏感但决策快，属于强意向待转化用户。",basis:"解析依据：App 足迹 14 条（试听完成 100%、详情页停留 320s）+ 微信聊天记录 38 条 + 备注「家长关注效果」",end:"达成",rounds:8,conv:[
+{a:OPENING},
+{u:"嗯你说，孩子二次函数那块老丢分"},
+{a:"明白～悠悠在「二次函数图像变换」的练习正确率是 58%，这确实是初三的主要卡点。系统班第 3 章就是专攻这个，配 12 道压轴阶梯训练。要不要先约一次免费诊断课，看看具体卡在哪一步？"},
+{u:"可以啊，这周什么时候有？"},
+{a:"周四 19:30 和周六 10:00 都可以，您看哪个方便？"},
+{u:"周六吧，上午方便些"},
+{a:"好的，已帮您预约周六 10:00 的诊断课。上课前 30 分钟会推送提醒，也麻烦您让孩子把最近两次月考的数学卷拍照发我，老师课前看看。"},
+{u:"没问题，我今晚发给你"},
+{a:"收到～另外诊断课名额有点紧张，我先把位置锁定了，您不用现在付费，诊断完再决定是否报系统班。"},
+{u:"好的，那就先锁定吧"}]},
+{id:"U1002",name:"陈先生",role:"家长 · 初二",tags:["低客单","慢热","犹豫中"],all:["价格敏感","长考型","效果异议","被动应答","夜猫型"],summary:"关注物理系统班半年未下单，多次浏览比价，价格异议为主，需要更多效果证据才会推进。",basis:"解析依据：App 足迹 21 条（比价点击 5 次、收藏未购 2 门）+ 微信聊天记录 52 条",end:"观望",rounds:7,conv:[
+{a:"陈先生您好！看到您之前关注过初二物理系统班，想确认下您现在最关心的是提分效果还是上课时间安排？"},
+{u:"先说下多少钱吧"},
+{a:"好的，初二物理系统班目前是 799 元/学期，包含 36 节直播课 + 课后答疑，现在报名送一次学情诊断。"},
+{u:"有点贵，网上有类似的课才三四百"},
+{a:"价格确实要重点考虑。我们的差异主要在：①主讲老师 9 年毕业班经验；②支持 7 天无理由退款，先试后买不吃亏。可以先带孩子听一节体验课再决定？"},
+{u:"体验课不要钱？"},
+{a:"完全免费，45 分钟，孩子能直接感受老师风格，不合适也没损失。我这周帮您留个体验名额？"},
+{u:"那我先听体验课吧，合适再考虑系统班"},
+{a:"好的，已锁定周五 19:30 的体验课。上课链接和预习资料我会在课前 1 小时发您。"},
+{u:"好，周五见"}]},
+{id:"U1003",name:"Leo爸爸",role:"家长 · 高一",tags:["强质疑","理性冷静","效果异议"],all:["独立判断","信任异议","细节关注型","低耐心","独立决策"],summary:"重视隐私与信息来源，对营销触达天然警惕，信任建立前不会推进任何转化动作。",basis:"解析依据：App 足迹 9 条 + 微信聊天记录 26 条 + 备注「曾质疑数据来源」",end:"拒绝",rounds:3,conv:[
+{a:"Leo爸爸晚上好！看到 Leo 近期在 App 上做了 3 套英语时态专项练习，正确率 58%，时态混淆是他目前主要的丢分点。需要我给您一份针对性提升建议吗？"},
+{u:"你这个数据哪来的？我怎么不知道你们还记录这些"},
+{a:"是 Leo 自己在 App 内做练习时产生的学习数据，您在 App 的「学习报告」里也可以查看同一份数据，我们不收集额外信息。"},
+{u:"算了，你们这种跟推销电话一样的东西我不太信，先这样吧"}]},
+{id:"U1004",name:"小鹿要上岸",role:"学生 · 高三",tags:["高意向","主动型","冲刺期"],all:["重度学习者","学霸型","时间异议","升学备考","夜猫型"],summary:"高三冲刺学生，日均学习 78 分钟，主动寻求提分方案，预算有限但意愿极强。",basis:"解析依据：App 足迹 33 条（日均 78min、周活 6 天）+ 微信聊天记录 41 条",end:"达成",rounds:8,conv:[
+{a:"同学你好呀～看到你最近在刷「函数与导数压轴」专项，正确率一直在涨，很努力！需要一份考前 60 天冲刺规划吗？"},
+{u:"要！我函数还行，导数综合题老是卡住"},
+{a:"你目前导数综合的正确率 64%，主要卡在分类讨论第二步。冲刺班的第 5-7 讲专门拆这个，配 20 道真题阶梯。可以先约周六的免费诊断，老师帮你定位具体断点？"},
+{u:"好，周六几点？我上午要上课"},
+{a:"周六 14:00 可以吗？我帮你占位了，记得提前 10 分钟进教室～"},
+{u:"好嘞谢谢！"},
+{a:"诊断课前建议你把最近两次导数大错的卷子拍照发我，我同步给老师，课上更有针对性。"},
+{u:"ok 我下午放学发"},
+{a:"收到啦。另外我把冲刺班的 200 元优惠券也帮你锁定了，诊断完如果合适可以直接用。"},
+{u:"太好了，周六见！"}]},
+{id:"U1005",name:"王女士",role:"家长 · 小六",tags:["价格敏感","犹豫纠结","新线索"],all:["券驱动型","低客单","被动应答","纯浏览未购"],summary:"新注册用户，领过两次券未使用，价格是唯一决策变量，连续信息轰炸会直接流失。",basis:"解析依据：App 足迹 11 条（券点击 3 次、加购未付 1 门）",end:"顾虑",rounds:5,conv:[
+{a:"王女士您好！欢迎关注青藤～看到您把「小升初数学衔接班」加入了购物车还没完成支付，是遇到什么问题了吗？"},
+{u:"还在看，还没想好"},
+{a:"跟您同步下：衔接班原价 599，现在有开学季券后 449，48 小时内有效。"},
+{a:"另外这个课包含 24 节课 + 入学摸底测评。"},
+{a:"现在是报名高峰期，这一期名额只剩 6 个了，建议您尽快锁定。"},
+{u:"你一下发这么多我有点懵……我先自己看看吧"}]},
+{id:"U1006",name:"阿灿",role:"学生 · 高二",tags:["沉默型","低耐心","周末型"],all:["轻度学习者","拖延型","被动应答","潜水型","低风险流失"],summary:"收藏了作文冲刺课但从未开始学习，对主动触达响应率极低，属于沉默待唤醒群体。",basis:"解析依据：App 足迹 5 条（收藏未学、推送点击率 3%）",end:"沉默",rounds:2,conv:[
+{a:"阿灿你好呀～看到你收藏了《高考语文作文冲刺》还没开始学，最近是遇到什么困难了吗？"},
+{a:"如果最近学业忙，也可以先看看这份 3 分钟的作文素材速览，不打扰你～"}]},
+{id:"U1007",name:"桃子妈妈",role:"家长 · 四年级",tags:["复购潜力","券驱动型","高价值"],all:["中客单","高复购潜力","积极乐观","活跃参与型","夜猫型"],summary:"已购 3 门课的老用户，完课率高，对平台信任度好，有券即决策，适合推荐进阶课。",basis:"解析依据：App 足迹 28 条（累计付费 3280 元、复购间隔 40 天）+ 微信聊天记录 65 条",end:"达成",rounds:3,conv:[
+{a:"桃子妈妈晚上好～桃子的《英语自然拼读》已经完成 92% 啦，学得很稳！按这个节奏，可以开始规划下一阶段的阅读课了。"},
+{u:"是啊老师，她自己学得挺开心的。有什么推荐的？"},
+{a:"配套的《分级阅读精讲》正适合，这次给您留了一张 100 元的老学员专属券，券后 559。要我帮您直接锁定这周六开班的班次吗？"},
+{u:"行，那就报这个吧"}]},
+{id:"U1008",name:"老周",role:"家长 · 初三",tags:["效果异议","结果导向","瓶颈期"],all:["独立判断","高客单","理性冷静","长考型","效果异议"],summary:"孩子成绩长期停滞，家长只认效果证据，对课程宣传免疫，需要先诊断后谈方案。",basis:"解析依据：App 足迹 17 条（正确率趋势平缓）+ 通话转写 3 段 + 备注「多次询问能提多少分」",end:"顾虑",rounds:5,conv:[
+{a:"周先生您好！看到孩子这学期数学正确率在 62% 上下波动，一直没突破。想约一次免费诊断，先找到卡点？"},
+{u:"你们能保证提多少分？"},
+{a:"我们不能承诺具体提分——这也是对您负责。但可以先做一次 40 分钟诊断，孩子卡点在哪、要补多少课时，数据会说得清清楚楚。"},
+{u:"之前在别家学了一年也没什么用"},
+{a:"理解。所以这次先诊断、后方案，诊断免费，觉得不值就当多做了一套卷子，没有损失。"},
+{u:"效果要是看不出来，还是算了……"}]},
+{id:"U1009",name:"Minnie",role:"学生 · 初一",tags:["快速决策","主动型","预习新课"],all:["中度学习者","匀速型","积极乐观","早鸟型","独立决策"],summary:"主动性强的新生，明确想提前预习初一下内容，决策链路短，适合直接推体验课。",basis:"解析依据：App 足迹 12 条 + 微信聊天记录 18 条",end:"达成",rounds:3,conv:[
+{a:"Minnie 同学好～看到你最近在预习「平面直角坐标系」，提前学新学期内容，很棒的习惯！"},
+{u:"对呀 我怕开学跟不上"},
+{a:"那《初一下数学预习营》正合适，每天 20 分钟轻量预习。先来一节免费体验？周日晚 8 点有一场。"},
+{u:"好呀 我定个闹钟"}]},
+{id:"U1010",name:"大力妈妈",role:"家长 · 高一",tags:["易情绪化","退款风险","高投诉"],all:["焦虑急躁","低耐心","高风险流失","高退款倾向","夜猫型"],summary:"正处退费纠纷中的高情绪用户，此前 3 次沟通未解决，任何营销话术都会激化矛盾。",basis:"解析依据：App 足迹 8 条（退款 1 次、支付失败 2 次）+ 通话转写 6 段 + 备注「退费已超时，情绪激动」",end:"人工",rounds:4,conv:[
+{a:"大力妈妈您好！上次反馈的数学退费问题我们已加急处理，预计 3 个工作日内到账。另外看到大力最近在预习高一内容，需要给您一份衔接规划吗？"},
+{u:"到账？都第八天了！你们每次都这么说！我要投诉！"},
+{a:"非常抱歉给您带来困扰，退费确实超时了，我马上为您升级加急，同时申请了 200 元补偿券。"},
+{u:"我不要券！给我退钱！转人工！"},
+{a:"好的，我马上为您转接人工客服，请稍等，不会再让您重复描述。"}]},
+{id:"U1011",name:"静静妈",role:"家长 · 大班",tags:["犹豫纠结","低耐心","纯浏览"],all:["价格敏感","从众型","长考型","被动应答","纯浏览未购"],summary:"学龄前家长，观望心态重，容易受「别人家孩子在学」影响，但首次转化门槛高。",basis:"解析依据：App 足迹 7 条 + 微信聊天记录 22 条",end:"观望",rounds:4,conv:[
+{a:"静静妈妈好～静静马上要升大班了，看到您在看思维启蒙课，是在做幼小衔接的准备吗？"},
+{u:"嗯 先看看 别的孩子都在学什么"},
+{a:"大班这个阶段，思维启蒙重点是数感和专注力。我们有体验营，第一节免费，很多同班小朋友都在上。"},
+{u:"体验课要不要另外收费？后面会不会一直推销？"},
+{a:"体验课完全免费，不满意随时退出，不会频繁打扰您。"},
+{u:"那我再想想吧"}]},
+{id:"U1012",name:"阿凯",role:"学生 · 高二",tags:["被动应答","轻度学习","时间异议"],all:["突击型","周末型","低耐心","潜水型","中风险流失"],summary:"只在周末突击学习，自认时间不够，对长周期课程有天然抗拒。",basis:"解析依据：App 足迹 10 条（周末学习占比 87%）",end:"观望",rounds:4,conv:[
+{a:"阿凯你好～看到你周末集中刷了不少物理题，电磁感应部分正确率不错！要看看针对性的拔高内容吗？"},
+{u:"平时没时间 周末也不想排太满"},
+{a:"理解，周末确实要劳逸结合。那可以只看每周末 1 小时的专题课，节奏完全由你掌控。"},
+{u:"先不用了 谢谢"},
+{a:"好的～需要的时候随时找我，祝月考顺利！"}]},
+{id:"U1013",name:"楠楠爸爸",role:"家长 · 五年级",tags:["从众型","首购用户","夜猫型"],all:["中客单","积极乐观","活跃参与型","易被朋友影响"],summary:"班级群里看到其他家长推荐后来了解，社交驱动决策，信任好友背书。",basis:"解析依据：App 足迹 15 条 + 微信聊天记录 30 条 + 备注「班级群推荐来的」",end:"达成",rounds:4,conv:[
+{a:"楠楠爸爸晚上好！看到您今晚浏览了《五年级数学培优 A 班》，是有朋友推荐吗？"},
+{u:"对 班里好几个孩子都在你们这学"},
+{a:"哈哈感谢推荐～A 班王老师带了 6 届五年级，班里那几位小朋友就在她班上。要不先约一次免费试听，和同学同一时段？"},
+{u:"可以 和同学一起他有伴"},
+{a:"好嘞，帮您约到了周六 9:00 王老师班，试听完全部免费～"}]},
+{id:"U1014",name:"丫丫",role:"学生 · 六年级",tags:["积极乐观","爱刷题","上升期"],all:["中度学习者","匀速型","主动型","小升初备考"],summary:"爱刷题的小升初学生，正处正确率快速上升期，学习热情高，乐于接受建议。",basis:"解析依据：App 足迹 19 条（正确率趋势 +11%）+ 微信聊天记录 15 条",end:"达成",rounds:3,conv:[
+{a:"丫丫好呀～最近一周你刷了 120 道计算题，正确率从 78% 涨到 89%，进步超明显！"},
+{u:"嘿嘿 我想冲一下重点班"},
+{a:"冲重点班的话，分数应用题是拉分关键。周六有一场重点班冲刺体验课，专门讲这类题的秒杀技巧，来听吗？"},
+{u:"来！我叫我妈给我报"}]},
+{id:"U1015",name:"苏女士",role:"家长 · 初三",tags:["信任异议","细节关注","长考型"],all:["价格钝感","独立判断","理性冷静","犹豫纠结","中客单"],summary:"决策周期超过两周，反复对比师资、退费条款与合同细节，信任建立成本高。",basis:"解析依据：App 足迹 23 条（课程对比点击 6 次）+ 微信聊天记录 47 条 + 通话转写 2 段",end:"顾虑",rounds:5,conv:[
+{a:"苏女士您好！看到您这段时间对比了几家系统班，方便说下目前主要在纠结什么吗？"},
+{u:"我还在比较几家机构，你们老师换不换？中途退费怎么算？"},
+{a:"承诺固定老师，如有调整会提前 3 天沟通并给可选方案；退费按剩余课时比例计算，合同里写明，支持 7 天无理由全额退。"},
+{u:"合同发我看看"},
+{a:"好的，稍后发您 PDF 版，您和家人慢慢看，有问题随时问我。"},
+{u:"嗯 我看完再说"}]},
+{id:"U1016",name:"大熊",role:"学生 · 高一",tags:["沉默型","低意向","周末型"],all:["轻度学习者","拖延型","潜水型","高风险流失","时间异议"],summary:"近 20 天未登录，推送点击率为 0，对学习类触达完全不响应。",basis:"解析依据：App 足迹 3 条（最后学习间隔 20 天）",end:"沉默",rounds:2,conv:[
+{a:"大熊同学好～好久没见你登录啦，最近还好吗？"},
+{a:"给你留了一份期末速览资料，需要的话随时回复我～"}]},
+{id:"U1017",name:"罗妈妈",role:"家长 · 初二",tags:["高客单","价格钝感","高价值VIP"],all:["高复购潜力","快速决策","结果导向","活跃用户"],summary:"累计付费超 1.2 万的 VIP 用户，不问价格只看师资与效果，决策极快。",basis:"解析依据：App 足迹 35 条（累计付费 12680 元）+ 微信聊天记录 88 条",end:"达成",rounds:2,conv:[
+{a:"罗妈妈晚上好～您是老朋友了直接说：孩子这学期物理想上满分班的话，王老师班还剩 2 个名额。"},
+{u:"王老师的班就行 直接报"},
+{a:"已帮您锁定，课程安排稍后发您微信～"}]},
+{id:"U1018",name:"阿哲",role:"家长 · 初一",tags:["时间异议","忙碌","犹豫中"],all:["价格敏感","被动应答","匀速型","新客","夜猫型"],summary:"双职工家庭，接送时间是核心约束，对固定时段课程有顾虑。",basis:"解析依据：App 足迹 8 条 + 备注「只有晚上9点后有空」",end:"观望",rounds:4,conv:[
+{a:"阿哲您好！看到您在看初一线下班，孩子平时课后时间怎么安排呀？"},
+{u:"我们下班晚 只有九点以后有空"},
+{a:"九点后线下确实都下课了。其实有线上的同步班，19:40-21:10，在家就能上，回放永久有效。"},
+{u:"线上怕他坐不住"},
+{a:"线上班有随堂互动答题和课后督学，每节课老师都会点名互动。要不先试听一节看看孩子状态？"},
+{u:"先试试吧 我看看效果"}]},
+{id:"U1019",name:"贝贝妈妈",role:"家长 · 中班",tags:["强质疑","比价型","曾流失"],all:["价格敏感","信任异议","独立判断","流失用户","犹豫纠结"],summary:"去年购买后因效果不符预期退款流失，再次触达时对平台信任度低。",basis:"解析依据：App 足迹 6 条（退款 1 次）+ 微信聊天记录 33 条 + 备注「上次退费，谨慎触达」",end:"拒绝",rounds:3,conv:[
+{a:"贝贝妈妈您好～好久不见！看到您最近又来看启蒙课了，孩子现在习惯培养得怎么样呀？"},
+{u:"上次那个课孩子根本坐不住 后来退了你们忘了？"},
+{a:"记得的，非常抱歉当时体验不好。这次新课形式完全不同，是游戏化闯关式，每节只要 15 分钟。"},
+{u:"先不用了 不想再折腾了"}]},
+{id:"U1020",name:"周同学",role:"学生 · 初三",tags:["需帮扶型","焦虑急躁","瓶颈期"],all:["轻度学习者","需帮扶型","效果异议","升学备考","中风险流失"],summary:"成绩长期偏弱且临近中考，情绪焦虑，越被催促越抵触，需要低压力引导。",basis:"解析依据：App 足迹 13 条（正确率 46%）+ 微信聊天记录 29 条",end:"顾虑",rounds:4,conv:[
+{a:"周同学你好呀～离中考还有 200 天，现在开始稳步补，时间完全来得及。"},
+{u:"来得及吗 我感觉怎么学都学不会"},
+{a:"你上次月考数学 72 分，其实基础题丢了 18 分——这些不是学不会，是没系统过一遍。每天 30 分钟先把基础过完，比刷难题有效得多。"},
+{u:"每天 30 分钟我也坚持不下来"},
+{a:"那从每天 15 分钟开始，只做 5 道基础题，先建立手感。要给你排一份这样的轻量计划吗？"},
+{u:"算了 我自己再想想"}]}
+];
+
+/* ================================================================
+   报告数据（V1 / V2）
+================================================================ */
+const REPORTS={
+v1:{score:73.5,goal:"引导用户预约试听课",goalRate:"35%（7/20）",goalState:"部分达成",
+dims:[["目标达成度",20,14.4],["开场/触达质量",15,11.6],["用户理解与画像匹配",15,10.8],["回答相关性与准确性",15,12.6],["多轮推进与上下文承接",15,9.4],["体验与语气",10,6.9],["风险合规",10,7.8]],
+dist:[["目标达成",7,"#16a34a"],["继续观望",4,"#2563eb"],["顾虑未解决",4,"#d97706"],["沉默流失",2,"#8a8fa8"],["明确拒绝",2,"#dc2626"],["需人工介入",1,"#7c3aed"]],
+gdesc:"7 位用户完成预约试听；5 位用户仍在观望（价格与时间为主因）；4 位用户的核心顾虑（效果证明 / 信任 / 坚持难度）未被 Agent 解决；2 位沉默流失；2 位明确拒绝（均与信任异议处理不当相关）；1 位情绪升级场景转人工不及时。",
+issues:[
+{type:"信任异议处理不足",warn:true,user:"Leo爸爸",role:"强质疑 · 效果异议",ctx:[
+["Agent","Leo爸爸晚上好！看到 Leo 近期做了 3 套英语时态专项练习，正确率 58%……"],
+["用户","你这个数据哪来的？我怎么不知道你们还记录这些（反感）","hl"],
+["Agent","是 Leo 自己在 App 内做练习时产生的学习数据……"],
+["用户","算了，你们这种跟推销电话一样的东西我不太信（拒绝）","hl"]],fix:"开场直接引用后台学习数据，触发隐私顾虑后仅被动解释。建议开场话术改为「您和孩子在 App 的学习报告中可以看到这些数据」，并优先征求许可再引用数据。"},
+{type:"消息多发 + 施压式跟进",user:"王女士",role:"价格敏感 · 新线索",ctx:[
+["用户","还在看，还没想好"],
+["Agent","跟您同步下：衔接班原价 599，券后 449，48 小时内有效。"],
+["Agent","另外这个课包含 24 节课 + 入学摸底测评。"],
+["Agent","现在是报名高峰期，名额只剩 6 个，建议尽快锁定。（连发 3 条，含饥饿营销）","hl"]],fix:"对同一句用户回复连发 3 条消息（命中通信稳定性「多发」指标）；「名额只剩 6 个」对价格敏感型新用户构成施压感。建议单条结构化报价，留出回应空间，删除倒计时话术。"},
+{type:"应转人工未及时转",user:"大力妈妈",role:"易情绪化 · 退款风险",ctx:[
+["用户","到账？都第八天了！你们每次都这么说！我要投诉！","hl"],
+["Agent","非常抱歉……我马上为您升级加急，同时申请 200 元补偿券。"],
+["用户","我不要券！给我退钱！转人工！","hl"]],fix:"用户首次出现强烈负面情绪（投诉字眼 + 连续感叹号）时应立即转人工，Agent 却先推进补偿券二次安抚。此问题关联一票否决项「应转人工未转」，建议增加情绪升级识别规则：命中投诉/退费关键词时 2 轮内转人工。"},
+{type:"沉默用户唤醒策略单一",warn:true,user:"阿灿 / 大熊",role:"沉默型 · 低耐心",ctx:[
+["Agent","阿灿你好呀～看到你收藏了《高考语文作文冲刺》还没开始学……"],
+["（用户未回复，沉默 2 轮后对话结束）","hl"]],fix:"两次触达均使用同一类「课程提醒」话术，无差异化动作。建议对学生型沉默用户改用轻量福利钩子（资料包 / 积分），并在 2 次未回复后标记「沉默流失」归因到报告。"}],
+sugs:[
+["开场话术降低信任异议触发率","避免直接引用后台学习数据，改为引导用户查看「学习报告」再引用；受影响用户：Leo爸爸、贝贝妈妈（约 2/20 直接拒绝用户）"],
+["价格异议场景改为单条结构化报价","禁止对同一消息连发多条长消息；删除「名额只剩 X 个」类施压话术（关联风险合规扣分）"],
+["增加情绪升级识别与转人工规则","命中投诉 / 退费 / 连续感叹号时 2 轮内转人工，避免矛盾激化（关联一票否决项）"],
+["沉默用户分层唤醒策略","学生用户用轻量福利钩子替代课程提醒；连续 2 次未回复自动标记「沉默流失」并归因"],
+["目标引导更自然","在解答效果类疑问时嵌入预约动作（如「先免费诊断」），替代直接推销话术，提升观望用户转化"]]},
+v2:{score:86.4,goal:"引导用户预约试听课",goalRate:"60%（12/20）",goalState:"达成",
+dims:[["目标达成度",20,17.2],["开场/触达质量",15,13.4],["用户理解与画像匹配",15,13.1],["回答相关性与准确性",15,13.6],["多轮推进与上下文承接",15,12.2],["体验与语气",10,8.5],["风险合规",10,8.4]],
+dist:[["目标达成",12,"#16a34a"],["继续观望",4,"#2563eb"],["顾虑未解决",2,"#d97706"],["沉默流失",1,"#8a8fa8"],["明确拒绝",1,"#dc2626"],["需人工介入",0,"#7c3aed"]],
+gdesc:"相比 V1：预约转化由 7 人提升至 12 人；「顾虑未解决」由 4 人降至 2 人；情绪升级场景实现 2 轮内转人工（0 次激化）；信任异议用户中 1 位转化为观望。沉默流失仍有 1 人，学生端唤醒策略待下一版验证。",
+issues:[
+{type:"沉默用户唤醒策略待优化",warn:true,user:"大熊",role:"沉默型 · 低意向",ctx:[
+["Agent","大熊同学好～好久没见你登录啦，最近还好吗？"],
+["（福利钩子已触发领取，但未发起对话）","hl"]],fix:"新版福利钩子使资料领取率提升，但对话参与率仍为 0。建议下一版尝试家长端协同触达。"}],
+sugs:[
+["保持 V2 修复项","开场话术、单条报价、情绪转人工规则均已生效，建议沉淀为话术基线"],
+["沉默用户家长端协同触达","学生端福利钩子领取率高但对话率仍低，下一版联动家长消息链路"],
+["观望用户限时诊断权益","4 位观望用户集中在价格与时间顾虑，可增加免费诊断的稀缺权益试点"]]}
+};
+
+/* ================================================================
+   状态
+================================================================ */
+let state={uploaded:{},connOk:false,usersGenerated:false,testing:false,allDone:false,speed:false,version:1,chatUid:0,userView:'list'};
+let userState=[]; // {status: wait|run|done, shownMsgs:0}
+
+/* ================================================================
+   工具
+================================================================ */
+const $=id=>document.getElementById(id);
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),2600)}
+function openModal(id){$(id).classList.add("show")}
+function closeModal(id){$(id).classList.remove("show")}
+
+/* 可爱头像生成器 */
+const AV_COLORS=[["#ffd6e0","#ff8fab"],["#d6e5ff","#7ca6f8"],["#d9f2e6","#57c99b"],["#fff2cc","#ffce5c"],["#e8dcff","#a78bfa"],["#ffe0cc","#ff9f68"],["#d4f1ff","#5cc6e8"],["#fde2e2","#f87171"],["#e0f0d8","#8bc34a"],["#ffe9f0","#f472b6"]];
+const FACES=[{e:"•‿•",a:"🎀"},{e:"^‿^",a:"👑"},{e:"◕‿◕",a:"🌟"},{e:"⊙‿⊙",a:"🎧"},{e:"^◡^",a:"🧢"},{e:"•̀‿•́",a:"📚"},{e:"◕◡◕",a:"🎈"},{e:"˘‿˘",a:"☕"},{e:"^‿^",a:"🦋"},{e:"•‿•",a:"🌙"}];
+function avatar(seed,size=52){
+  const c=AV_COLORS[seed%AV_COLORS.length],f=FACES[seed%FACES.length];
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100"><defs><linearGradient id="g${seed}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></linearGradient></defs><rect width="100" height="100" rx="30" fill="url(#g${seed})"/><text x="50" y="58" font-size="30" text-anchor="middle" font-weight="700" fill="#3a3a55">${f.e}</text><text x="78" y="30" font-size="20" text-anchor="middle">${f.a}</text></svg>`;
+}
+
+/* ================================================================
+   页面一逻辑
+================================================================ */
+const UPLOADS=[
+{id:"basic",icon:"🪪",bg:"var(--violet-bg)",name:"基础身份信息",req:"must",desc:"含 UID（用户唯一ID）、昵称、年级、角色等身份骨架（必填）",file:"user_identity_2026-09.xlsx · 22 条"},
+{id:"app",icon:"📱",bg:"var(--blue-bg)",name:"App 使用足迹",req:"opt",desc:"含 UID · 学习行为 / 课程浏览意向 / 支付转化 / 设备环境等 8 类",file:"app_footprint_2026-09.zip · 20 用户"},
+{id:"chat",icon:"💬",bg:"var(--cyan-bg)",name:"历史聊天记录",req:"opt",desc:"含 UID（sender_id）· 微信记录导出 JSONL，分析真实表达方式与沟通习惯",file:"chat_records.jsonl · 1,842 条"},
+{id:"voice",icon:"🎙️",bg:"var(--orange-bg)",name:"录音 / 转写文本",req:"opt",desc:"含 UID · 命名 {用户ID}_{销售ID}_{日期}_{序号}，可多个压缩包",file:"call_transcripts.zip · 11 段"},
+{id:"note",icon:"📝",bg:"var(--green-bg)",name:"人工补充备注",req:"opt",desc:"含 UID · 业务人员额外判断：着急 / 关注效果 / 受竞品影响等",file:"sales_notes.xlsx · 36 条"}];
+
+function renderUploads(){
+  $("uploadGrid").innerHTML=UPLOADS.map(u=>`
+  <div class="up-card" id="up_${u.id}">
+    <div class="ic" style="background:${u.bg}">${u.icon}</div>
+    <h4>${u.name} <span class="req-badge ${u.req==='must'?'must':'opt'}">${u.req==='must'?'必填':'选填'}</span></h4>
+    <p>${u.desc}</p>
+    <button class="up-btn" onclick="doUpload('${u.id}')">⬆ 上传文件</button>
+    <div class="file-chip" style="display:none" id="fc_${u.id}"><span class="chk">✓</span><span id="fn_${u.id}"></span></div>
+  </div>`).join("");
+}
+function doUpload(id){
+  const u=UPLOADS.find(x=>x.id===id);
+  state.uploaded[id]=true;
+  $("up_"+id).classList.add("uploaded");
+  $("fc_"+id).style.display="flex";
+  $("fn_"+id).textContent=u.file;
+  refreshUploadStats();
+}
+function refreshUploadStats(){
+  const n=Object.keys(state.uploaded).length;
+  if(n>0){
+    $("uploadStats").style.display="block";
+    const hasBasic=!!state.uploaded.basic;
+    const hasMaterial=state.uploaded.app||state.uploaded.chat||state.uploaded.voice||state.uploaded.note;
+    const valid=hasBasic&&hasMaterial;
+    $("stValid").textContent=valid?20:(hasBasic?"2":"0");
+    $("stGen").textContent=valid?20:(hasBasic?"0":"0");
+  }
+  checkStep1();
+}
+const GOALS=["引导用户回复","预约体验","领取资料","进入人工咨询","完成购买","唤醒沉默用户","收集用户顾虑"];
+function renderGoals(){
+  $("goalChips").innerHTML=GOALS.map(g=>`<button class="chip" onclick="pickGoal(this,'${g}')">${g}</button>`).join("");
+}
+function pickGoal(el,g){
+  document.querySelectorAll("#goalChips .chip").forEach(c=>c.classList.remove("on"));
+  el.classList.add("on");
+  $("fGoal").value=g;
+  checkStep1();
+}
+$("fGoal").addEventListener("input",checkStep1);
+
+function testConn(){
+  const btn=$("btnConn");btn.disabled=true;btn.innerHTML="⏳ 正在校验连通性…";
+  setTimeout(()=>{
+    const url=$("fAUrl").value.trim(),name=$("fAName").value.trim();
+    if(!url||!name){
+      const b=$("connBanner");b.className="ok-banner show fail";b.innerHTML="❌ 接入失败：Agent 名称与 API 地址为必填项";btn.disabled=false;btn.innerHTML="🔌 测试连通性";return;
+    }
+    state.connOk=true;btn.disabled=false;btn.innerHTML='🔌 重新校验';
+    const b=$("connBanner");b.className="ok-banner show";
+    b.innerHTML=`✅ <b>成功接入</b> ·「${name}」 · 响应 312ms · 鉴权通过 · 字段映射 ${$("fAField").value} 校验通过`;
+    $("agentPill").className="agent-pill ok";
+    $("agentPillTxt").textContent=`已接入：${name}`;
+    checkStep1();toast("Agent API 成功接入 ✓");
+  },1400);
+}
+function checkStep1(){
+  const dataOk=state.uploaded.basic&&(state.uploaded.app||state.uploaded.chat||state.uploaded.voice||state.uploaded.note);
+  const goalOk=$("fGoal").value.trim().length>0;
+  $("btnGen").disabled=!(dataOk&&!state.usersGenerated); // 数据齐才可生成；生成完置灰
+  if(state.usersGenerated)$("btnGen").innerHTML="✓ 虚拟用户已生成（20 个）";
+  $("btnToGen").disabled=!(state.usersGenerated&&state.connOk&&goalOk);
+  const miss=[];
+  if(!dataOk&&!(state.uploaded.basic||(state.uploaded.app||state.uploaded.chat||state.uploaded.voice||state.uploaded.note)))miss.push("上传数据");
+  else if(!state.usersGenerated)miss.push("生成虚拟用户");
+  if(!state.connOk)miss.push("Agent API 连通性测试");
+  if(!goalOk)miss.push("填写测评目标");
+  $("readyHint").innerHTML=miss.length?`待完成：${miss.join(" · ")}`:`✓ 全部就绪，点击即可开始对话测评`;
+  $("readyHint").style.color=miss.length?"var(--ink-3)":"var(--green)";
+}
+/* 生成虚拟用户（带进度） */
+function startGen(){
+  const dataOk=state.uploaded.basic&&(state.uploaded.app||state.uploaded.chat||state.uploaded.voice||state.uploaded.note);
+  if(!dataOk){toast("请先上传基础身份信息，并至少上传一类可分析材料");return}
+  if(state.usersGenerated)return;
+  const btn=$("btnGen");btn.disabled=true;btn.innerHTML="⏳ 正在生成…";
+  $("genProg").style.display="block";$("genHint").textContent="生成中请稍候，请勿离开本页";
+  const steps=["正在按 UID 关联五类数据…","正在解析 App 足迹与聊天记录…","正在打画像标签…","正在构建虚拟用户人格…"];
+  let n=0;
+  const total=20;
+  const timer=setInterval(()=>{
+    n++;
+    $("genCnt").textContent=n;
+    $("genPct").textContent=Math.round(n/total*100)+"%";
+    $("genBar").style.width=(n/total*100)+"%";
+    $("genStep").textContent=steps[Math.min(Math.floor(n/total*steps.length),steps.length-1)];
+    if(n>=total){
+      clearInterval(timer);
+      state.usersGenerated=true;
+      userState=USERS.map(()=>({status:"wait",shown:0}));
+      btn.innerHTML="✓ 虚拟用户已生成（20 个）";
+      $("genHint").textContent="已完成，可继续完成 Agent API 接入与测评目标";
+      const b=$("genBanner");b.className="ok-banner show";
+      b.innerHTML=`✅ <b>已生成 20 个虚拟用户</b> · UID 匹配 20/20 · 平均画像标签 8 个 · 可点击下方「查看画像标签体系」了解标签维度`;
+      checkStep1();toast("🎉 20 个虚拟用户生成完成");
+    }
+  },260);
+}
+function toGen(){
+  const goal=$("fGoal").value.trim();
+  if(!goal){toast("请先填写本次希望 Agent 达成的目标");return}
+  if(!state.usersGenerated){toast("请先在上方点击「开始生成虚拟用户」");return}
+  if(!state.connOk){toast("请先完成 Agent API 接入并通过连通性测试");return}
+  gotoStep(2);
+  if(!state.testing&&!state.allDone){
+    renderUsers(true);selectUser(0);
+    toast("Agent 与虚拟用户已开始对话测试，点击任意用户可围观对话");
+    setTimeout(()=>startTest(),600);
+  }
+}
+
+/* ================================================================
+   步骤导航
+================================================================ */
+function gotoStep(n){
+  if(n===2&&!state.usersGenerated){toast("请先在第一步上传数据并生成虚拟用户");return}
+  if(n===3&&!state.allDone){toast("测评尚未完成，请先完成对话测试");return}
+  if(n===2&&!$("chatUsers").innerHTML)renderUsers(true);
+  if(n===2&&state.chatUid===0)selectUser(0);
+  [1,2,3].forEach(i=>{
+    $("page"+i).classList.toggle("show",i===n);
+    const st=$("step"+i);
+    st.classList.toggle("active",i===n);
+    st.classList.toggle("done",(i===1&&state.usersGenerated)||(i===2&&state.allDone));
+  });
+  $("ar1").classList.toggle("past",state.usersGenerated);
+  $("ar2").classList.toggle("past",state.allDone);
+  if(n===3)renderReport();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ================================================================
+   页面二逻辑（左侧用户列表 + 右侧对话区）
+================================================================ */
+function renderUsers(pop){
+  renderUsersList(pop);
+  renderUsersGrid(pop);
+  refreshStats();
+}
+function setUserView(v){
+  state.userView=v;
+  $("vList").classList.toggle("on",v==="list");
+  $("vGrid").classList.toggle("on",v==="grid");
+  $("chatUsers").style.display=v==="list"?"block":"none";
+  $("chatUsersGrid").style.display=v==="grid"?"grid":"none";
+  $("chatUsersTitle").textContent=v==="list"?"虚拟用户列表":"虚拟用户总览";
+}
+function renderUsersList(pop){
+  $("chatUsers").innerHTML=USERS.map((u,i)=>{
+    const s=userState[i].status;
+    const on=state.chatUid===i?"on":"";
+    return `<div class="u-row ${on}" id="uc_${i}" onclick="openChat(${i})">
+      <div class="u-avatar">${avatar(i,40)}</div>
+      <div class="info">
+        <div class="name">${u.name}</div>
+        <div class="u-role">${u.role} · ${u.tags.slice(0,2).join("/")}</div>
+      </div>
+      <span class="st st-${s==='wait'?'wait':s==='run'?'run':'done'}" id="ust_${i}">${s==='wait'?'等待':s==='run'?'测试中':'已完成'}</span>
+    </div>`;
+  }).join("");
+  if(pop){document.querySelectorAll(".chat-users .u-row").forEach((c,i)=>setTimeout(()=>c.classList.add("pop"),i*60))}
+}
+function renderUsersGrid(pop){
+  $("chatUsersGrid").innerHTML=USERS.map((u,i)=>{
+    const s=userState[i].status;
+    const on=state.chatUid===i?"on":"";
+    const statusText=s==='wait'?'等待':s==='run'?'测试中':'已完成';
+    const endBadge=s==='done'?`<span class="u-end"><b style="color:${endColor(u.end)}">${u.end}</b> · ${u.rounds}轮</span>`:"";
+    return `<div class="u-card ${on}" id="ucg_${i}" onclick="openChat(${i})">
+      <span class="u-status st-${s==='wait'?'wait':s==='run'?'run':'done'}">${statusText}</span>
+      <div class="u-head"><div class="u-avatar">${avatar(i,48)}</div><div><div class="u-name">${u.name}</div><div class="u-role">${u.role}</div></div></div>
+      <div class="u-tags">${u.tags.map((t,j)=>`<span class="u-tag t${j+1}">${t}</span>`).join("")}</div>
+      ${endBadge}
+    </div>`;
+  }).join("");
+  if(pop){document.querySelectorAll("#chatUsersGrid .u-card").forEach((c,i)=>setTimeout(()=>c.classList.add("pop"),i*60))}
+}
+function refreshStats(){
+  const wait=userState.filter(s=>s.status==="wait").length;
+  const run=userState.filter(s=>s.status==="run").length;
+  const done=userState.filter(s=>s.status==="done").length;
+  $("cntWait").textContent=wait;$("cntRun").textContent=run;$("cntDone").textContent=done;
+  const pct=Math.round(done/USERS.length*100);
+  $("progPct").textContent=pct+"%";
+  $("progBar").style.width=pct+"%";
+  $("btnStart").disabled=state.testing||!state.usersGenerated||!state.connOk||state.allDone;
+  if(state.allDone){
+    $("progLabel").textContent="全部测试完成";
+    $("progSub").textContent="20 个虚拟用户对话已结束，报告已生成";
+  }else if(state.testing){
+    $("progLabel").textContent="对话测试进行中";
+    $("progSub").textContent="Agent 先开口 · 虚拟用户按画像回复（全局上限 6 轮）";
+  }
+  userState.forEach((st,i)=>{
+    const s=st.status;
+    const text=s==='wait'?'等待':s==='run'?'测试中':'已完成';
+    const el=$("ust_"+i);if(el){el.className=`st st-${s==='wait'?'wait':s==='run'?'run':'done'}`;el.textContent=text;}
+    const cg=$("ucg_"+i);if(cg){
+      cg.querySelector(".u-status").className=`u-status st-${s==='wait'?'wait':s==='run'?'run':'done'}`;
+      cg.querySelector(".u-status").textContent=text;
+      const endBadge=cg.querySelector(".u-end b");
+      if(s==='done'&&!endBadge){
+        const span=document.createElement("span");span.className="u-end";
+        span.innerHTML=`<b style="color:${endColor(USERS[i].end)}">${USERS[i].end}</b> · ${USERS[i].rounds}轮`;
+        cg.appendChild(span);
+      }
+    }
+  });
+}
+function toggleSpeed(){
+  state.speed=!state.speed;
+  $("btnSpeed").innerHTML=state.speed?"⏩ 加速演示：开":"⏩ 加速演示：关";
+}
+function startTest(){
+  if(!state.connOk){toast("请先完成 Agent API 接入并显示「成功接入」");return}
+  state.testing=true;refreshStats();
+  $("doneBanner").classList.remove("show");
+  const base=state.speed?260:900;
+  USERS.forEach((u,i)=>{
+    setTimeout(()=>runUser(i,base),i*(state.speed?350:1200));
+  });
+}
+function runUser(i,delay){
+  const u=USERS[i];
+  userState[i].status="run";
+  refreshStats();
+  const conv=u.conv;
+  let m=0;
+  const step=()=>{
+    m++;
+    userState[i].shown=m;
+    if(state.chatUid===i)renderDrawerChat(i,true);
+    if(m<conv.length){setTimeout(step,delay*(conv[m].a?0.8:1.4))}
+    else finishUser(i);
+  };
+  setTimeout(step,delay*1.6);
+}
+function finishUser(i){
+  userState[i].status="done";
+  refreshStats();
+  if(state.chatUid===i)renderDrawerChat(i,true);
+  if(userState.every(s=>s.status==="done")){
+    state.testing=false;state.allDone=true;
+    $("doneBanner").classList.add("show");
+    refreshStats();toast("🎉 全部测试完成，测评报告已生成");
+  }
+}
+
+/* ===== 右侧对话区 ===== */
+function agentAvatar(){
+  return `<svg viewBox="0 0 48 48" width="100%" height="100%"><rect width="48" height="48" rx="10" fill="#20294a"/><rect x="11" y="16" width="26" height="17" rx="8.5" fill="#4f6ef7"/><circle cx="18.5" cy="24.5" r="3" fill="#fff"/><circle cx="29.5" cy="24.5" r="3" fill="#fff"/><circle cx="19.3" cy="23.8" r="1" fill="#20294a"/><circle cx="30.3" cy="23.8" r="1" fill="#20294a"/><path d="M21 28.5 q3 2.4 6 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><rect x="22" y="8" width="4" height="5" rx="2" fill="#4f6ef7"/><circle cx="24" cy="7" r="2.2" fill="#95ec69"/><rect x="18" y="37" width="12" height="3" rx="1.5" fill="#4f6ef7"/></svg>`;
+}
+function chatStatText(i){
+  const u=USERS[i],st=userState[i];
+  if(st.status==="done")return `已结束 · ${u.rounds} 轮 · 结束状态：${u.end}`;
+  if(st.status==="run")return "对话进行中…";
+  return "等待测试 · Agent 将先开口";
+}
+function openChat(i){
+  if(!$("page2").classList.contains("show"))gotoStep(2);
+  selectUser(i);
+}
+function selectUser(i){
+  state.chatUid=i;
+  document.querySelectorAll(".chat-users .u-row").forEach((el,idx)=>el.classList.toggle("on",idx===i));
+  document.querySelectorAll("#chatUsersGrid .u-card").forEach((el,idx)=>el.classList.toggle("on",idx===i));
+  const u=USERS[i],st=userState[i];
+  $("paneHead").innerHTML=`<div class="hava">${agentAvatar()}</div>
+    <div class="title"><b>青藤AI课程顾问</b><span id="paneStat">${chatStatText(i)}</span></div>
+    <button class="info-btn" onclick="toggleProfile(true)">查看画像档案</button>`;
+  $("paneFoot").innerHTML=`<span class="status" id="paneFootStatus">${st.status==="done"?"对话已结束 · 已计入测评报告":st.status==="run"?"虚拟用户自动回复中（模拟对话）":"等待测试开始…"}</span>`;
+  $("paneProfile").innerHTML=`<div class="pp-h">虚拟用户画像档案 <button class="info-btn" style="margin-left:auto" onclick="toggleProfile(false)">关闭</button></div>
+    <div class="pp-body">
+      <div class="d-sec" style="display:flex;gap:13px;align-items:center">
+        <div style="width:56px;height:56px;border-radius:14px;overflow:hidden;flex:none">${avatar(i,56)}</div>
+        <div><div style="font-weight:700;font-size:15px">${u.name}</div><div style="font-size:12px;color:var(--ink-3);margin-top:2px">${u.id} · ${u.role}</div></div>
+      </div>
+      <div class="d-sec" style="margin-top:18px"><h4>核心标签（前台展示）</h4><div class="pill-row">${u.tags.map(t=>`<span class="pill">${t}</span>`).join("")}</div></div>
+      <div class="d-sec"><h4>完整画像标签（后台）</h4><div class="pill-row">${u.all.map(t=>`<span class="pill">${t}</span>`).join("")}</div></div>
+      <div class="d-sec"><h4>画像摘要</h4><div class="d-summary">${u.summary}</div></div>
+      <div class="d-sec"><h4>生成依据</h4><div class="d-summary">${u.basis}</div></div>
+    </div>`;
+  toggleProfile(false);
+  renderDrawerChat(i,false);
+}
+function toggleProfile(on){$("paneProfile").classList.toggle("show",on)}
+function renderDrawerChat(i,live){
+  const box=$("paneBody");if(!box)return;
+  const u=USERS[i],st=userState[i];
+  const tm=`今天 20:${String((12+i*3)%60).padStart(2,"0")}`;
+  let html=`<div class="tdiv">${tm}</div>`;
+  u.conv.slice(0,st.shown).forEach(msg=>{
+    if(msg.a!==undefined)html+=`<div class="row a"><div class="rhava">${agentAvatar()}</div><div class="bub">${msg.a}</div></div>`;
+    if(msg.u!==undefined)html+=`<div class="row u"><div class="rhava">${avatar(i,38)}</div><div class="bub">${msg.u}</div></div>`;
+  });
+  if(st.status==="run"&&st.shown<u.conv.length){
+    const next=u.conv[st.shown];
+    if(next.a!==undefined)html+=`<div class="row a typing"><div class="rhava">${agentAvatar()}</div><div class="bub"><i></i><i></i><i></i></div></div>
+      <div class="sysmsg"><span>Agent 正在输出…（输出完停留 1 分钟再分析回复，演示已加速）</span></div>`;
+    else html+=`<div class="row u typing"><div class="rhava">${avatar(i,38)}</div><div class="bub"><i></i><i></i><i></i></div></div>
+      <div class="sysmsg"><span>虚拟用户正在结合画像决策回复…</span></div>`;
+  }
+  if(st.status==="done")html+=`<div class="tdiv">对话已结束</div><div class="end-tag"><span class="et-${u.end}">结束状态：${u.end}（${u.rounds} 轮 · ${endReason(u.end)}）</span></div>`;
+  if(st.status==="wait")html+=`<div class="sysmsg"><span>等待测试 · Agent 将先发起主动触达</span></div>`;
+  box.innerHTML=html;
+  const ps=$("paneStat");if(ps)ps.textContent=chatStatText(i);
+  const fi=$("paneFootStatus");if(fi)fi.textContent=st.status==="done"?"对话已结束 · 已计入测评报告":st.status==="run"?"虚拟用户自动回复中（模拟对话）":"等待测试开始…";
+  if(live)box.scrollTop=box.scrollHeight;
+}
+function endReason(e){
+  return {"达成":"完成本次测评目标","观望":"未拒绝但需更多信息","顾虑":"关键顾虑未解决","沉默":"不再回复","拒绝":"明确拒绝继续","人工":"问题超出 Agent 能力，转人工"}[e]||"";
+}
+function endColor(e){
+  return {"达成":"#16a34a","观望":"#2563eb","顾虑":"#ea580c","沉默":"#6b7280","拒绝":"#dc2626","人工":"#7c3aed"}[e]||"#666";
+}
+function closeDrawer(){toggleProfile(false)}
+
+/* ================================================================
+   页面三：报告
+================================================================ */
+function renderReport(){
+  const r=state.version===1?REPORTS.v1:REPORTS.v2;
+  $("repVer").textContent="V"+state.version;
+  $("rAgent").textContent=$("fAName").value||"青藤AI课程顾问";
+  $("rAgentVer").textContent=state.version===1?"v1.3.0":"v1.4.0（修复后）";
+  $("rGoal").textContent=r.goal;$("gGoal").textContent=r.goal;
+  $("rTime").textContent="2026-09-06 09:"+ (state.version===1?"41":"52");
+  // 分数环
+  const C=2*Math.PI*74;
+  setTimeout(()=>{$("ringFg").style.strokeDashoffset=C*(1-r.score/100)},60);
+  let cur=0;const t=setInterval(()=>{cur+=r.score/28;if(cur>=r.score){cur=r.score;clearInterval(t)}$("scoreVal").textContent=cur.toFixed(1)},35);
+  const cl=r.score>=85?["pass","建议通过"]:r.score>=70?["mid","建议优化后再测"]:["bad","不建议上线"];
+  const cc=$("conclusion");cc.className="conclusion "+cl[0];cc.textContent="结论："+cl[1];
+  // 目标
+  $("gResult").innerHTML=`达成情况：<b style="color:${r.goalState==="达成"?"var(--green)":"var(--orange)"}">${r.goalState}</b> · 转化率 ${r.goalRate}`;
+  $("gDesc").innerHTML=r.gdesc;
+  // 分项
+  $("dimBars").innerHTML=r.dims.map(d=>{
+    const ratio=d[2]/d[1]*100,low=ratio<70;
+    return `<div class="dim-bar ${low?"low":""}"><div class="t"><b>${d[0]}</b><span>权重 ${d[1]} · 得分 <span class="sc">${d[2]}</span> / ${d[1]}</span></div><div class="bar"><i style="width:0%"></i></div></div>`;
+  }).join("");
+  setTimeout(()=>document.querySelectorAll("#dimBars .bar>i").forEach((el,i)=>el.style.width=(r.dims[i][2]/r.dims[i][1]*100)+"%"),80);
+  // 状态分布
+  const distHtml=id=>$(id).innerHTML=r.dist.map(d=>{
+    const max=Math.max(...r.dist.map(x=>x[1]));
+    return `<div class="dist-item clickable" onclick="filterEnd('${d[0]}')"><span class="lb">${d[0]}</span><div class="bar"><i style="width:${d[1]/max*100}%;background:${d[2]}"></i></div><span class="n"><b>${d[1]}</b> 人 · ${Math.round(d[1]/20*100)}%</span></div>`;
+  }).join("");
+  distHtml("distRow");
+  // 虚拟用户总览
+  renderOverview();
+  // 问题片段
+  $("issues").innerHTML=r.issues.map(is=>`
+    <div class="issue">
+      <div class="i-head"><span class="i-type ${is.warn?"warn":""}">${is.type}</span><span class="i-user">${is.user} <em>${is.role}</em></span></div>
+      <div class="i-ctx">${is.ctx.map(c=>`<div class="m ${c[2]?"u-hl":""}"><b>${c[0]}</b>${c[1]}</div>`).join("")}</div>
+      <div class="i-fix"><b>💡 修改建议</b>${is.fix}</div>
+    </div>`).join("");
+  // 优化建议
+  $("sugs").innerHTML=r.sugs.map((s,i)=>`<div class="sug"><div class="no">${i+1}</div><div><b>${s[0]}</b><span>${s[1]}</span></div></div>`).join("");
+}
+function filterEnd(name){
+  renderOverview(name);
+}
+function renderOverview(filterName){
+  const box=$("overviewGrid");
+  const list=filterName?USERS.filter(u=>u.end===filterName):USERS;
+  const hint=filterName?`「${filterName}」用户 · ${list.length} 人（点击卡片可回看对话上下文）`:`全部 20 个虚拟用户 · 点击卡片可回看完整对话`;
+  $("usersMini").querySelector(".hint").textContent=hint;
+  box.innerHTML=list.map(u=>{
+    const i=USERS.indexOf(u);
+    const endBadge=u.end?`<span class="u-end"><b style="color:${endColor(u.end)}">${u.end}</b> · ${u.rounds}轮</span>`:"";
+    return `<div class="u-card ${filterName?"on":""}" onclick="openChat(${i})">
+      <div class="u-head">
+        <div class="u-avatar">${avatar(i,44)}</div>
+        <div style="min-width:0"><div class="u-name">${u.name}</div><div class="u-role">${u.role}</div></div>
+      </div>
+      <div class="u-tags">${u.tags.map((t,j)=>`<span class="u-tag t${j+1}">${t}</span>`).join("")}</div>
+      ${endBadge}
+    </div>`;
+  }).join("");
+  if(filterName)$("usersMini").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+function copyLink(){
+  const link="https://vu-report.demo.qq.com/r/"+(state.version===1?"a7f3k9":"b2c8m4");
+  navigator.clipboard?navigator.clipboard.writeText(link).then(()=>toast("分享链接已复制："+link)).catch(()=>toast("分享链接："+link)):toast("分享链接："+link);
+}
+function retest(){
+  if(state.testing)return;
+  state.version=2;
+  // V2：模拟 Agent 修复后的结束状态分布（达成12 / 观望4 / 顾虑2 / 沉默1 / 拒绝1 / 人工0）
+  const v2Map={"观望":["苏女士","周同学","阿哲","静静妈"],"顾虑":["老周","王女士"],"沉默":["阿灿"],"拒绝":["Leo爸爸"]};
+  USERS.forEach(u=>{
+    const key=Object.keys(v2Map).find(k=>v2Map[k].includes(u.name));
+    u.end=key||"达成";u.rounds=key?u.rounds:Math.max(2,u.rounds-1);
+  });
+  userState.forEach(s=>{s.status="done";s.shown=USERS[userState.indexOf(s)].conv.length});
+  state.allDone=true;
+  renderUsers(false);
+  $("doneBanner").classList.add("show");
+  refreshStats();
+  toast("已切换 Agent v1.4.0（修复后），同批 20 个虚拟用户重新测评完成");
+  renderReport();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ================================================================
+   模态框 tabs 渲染
+================================================================ */
+function renderTabs(tabsId,bodyId,sheets,cls){
+  $(tabsId).innerHTML=sheets.map((s,i)=>`<button class="mtab ${i===0?"on":""}" onclick="switchTab('${tabsId}','${bodyId}',${i},'${cls}')">${s.name}</button>`).join("");
+  const s=sheets[0];
+  $(bodyId).innerHTML=sheetHtml(s,cls);
+}
+function switchTab(tabsId,bodyId,i,cls){
+  const sheets=cls==="field"?FIELD_SHEETS:cls==="label"?LABEL_SHEETS:METRIC_SHEETS;
+  document.querySelectorAll("#"+tabsId+" .mtab").forEach((t,j)=>t.classList.toggle("on",j===i));
+  $(bodyId).innerHTML=sheetHtml(sheets[i],cls);
+}
+function sheetHtml(s,cls){
+  let html="";
+  if(cls==="field"&&s.head.length===3)html=`<div class="note" style="margin:0 0 12px"><b>${s.desc||""}</b></div>`;
+  else if(s.sub)html=`<div class="note" style="margin:0 0 12px"><b>${s.sub}</b></div>`;
+  html+=`<table class="tbl"><thead><tr>${s.head.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>`;
+  s.rows.forEach(r=>{
+    html+="<tr>"+r.map((c,j)=>{
+      const isLast=s.head[s.head.length-1].includes("必填")&&j===r.length-1;
+      const val=(s.head[j]==="示例值")?`<span class="ex">${c}</span>`:(j===0?`<b>${c}</b>`:c);
+      return isLast?`<td><span class="req-badge ${c==="必填"?"must":c.includes("条件")?"cond":"opt"}">${c}</span></td>`:`<td>${val}</td>`;
+    }).join("")+"</tr>";
+  });
+  return html+"</tbody></table>";
+}
+
+/* ================================================================
+   初始化
+================================================================ */
+renderUploads();renderGoals();
+renderTabs("fieldTabs","fieldBody",FIELD_SHEETS,"field");
+renderTabs("labelTabs","labelBody",LABEL_SHEETS,"label");
+renderTabs("metricTabs","metricBody",METRIC_SHEETS,"metric");
+checkStep1();
+</script>
+</body>
+</html>
